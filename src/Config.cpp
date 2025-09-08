@@ -17,7 +17,9 @@ bool Config::parse(const char* filename)
 	_port = 8080;
 	_root_directory = "./www";
 	_error_page_404 = "./www/404.html";
-	std::cout << "Configuración cargada. Usando el puerto: " << _port << std::endl;
+	_autoindex = true;
+
+	std::cout << "Configuración cargada. Puerto: " << _port << ", Root: " << _root_directory << std::endl;
 	return (true);
 }
 
@@ -34,5 +36,10 @@ const std::string& Config::getRootDirectory() const
 const std::string& Config::getErrorPage404() const
 {
 	return (_error_page_404);
+}
+
+bool Config::getAutoindex() const
+{
+	return (_autoindex);
 }
 

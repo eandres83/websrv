@@ -7,18 +7,20 @@
 class Config
 {
 	private:
-		int _port;
-		std::string _root_directory;
-		std::string _error_page_404;
+		int		_port;
+		std::string	_root_directory;
+		std::string	_error_page_404;
+		bool		_autoindex;
 
 	public:
 		Config();
 		~Config();
 
-		bool parse(const char* filename);
-		int getPort() const;
-		const std::string& getRootDirectory() const;
-		const std::string& getErrorPage404() const;
+		bool			parse(const char* filename);
+		int			getPort() const;
+		const std::string&	getRootDirectory() const;
+		const std::string&	getErrorPage404() const;
+		bool			getAutoindex() const;
 };
 
 #endif // CONFIG_HPP

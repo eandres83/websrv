@@ -52,3 +52,22 @@ std::string Response::toString() const
 	return (response_stream.str());
 }
 
+void Response::buildSimpleResponse(const std::string& code, const std::string& message)
+{
+	setStatusCode(code, message);
+
+	std::stringstream body_stream;
+	body_stream << "<html><head><title>" << code << " " << message << "</tile></head>"
+		<< "<body><h1>" << code << " " << message << "</h1></body></html>";
+
+	setBody(body_stream.str());
+
+	addHeader("Content-Type", "text/html");
+}
+
+void Response::buildCustomResponse(const std::string& code, const std::string& message, const std::string& body)
+{
+	setStatusCode(code, message);
+	setBody(body);
+}
+
