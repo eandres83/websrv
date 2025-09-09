@@ -11,6 +11,7 @@ class Config
 		std::string	_root_directory;
 		std::string	_error_page_404;
 		bool		_autoindex;
+		int		_enable_reuse_addr;
 
 	public:
 		Config();
@@ -21,6 +22,7 @@ class Config
 		const std::string&	getRootDirectory() const;
 		const std::string&	getErrorPage404() const;
 		bool			getAutoindex() const;
+		int				getReuseAddr() const;
 };
 
 #endif // CONFIG_HPP
