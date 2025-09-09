@@ -40,15 +40,15 @@ Response DirectoryHandler::_generateAutoindexPage(const std::string& path, const
 	body_stream << "<html><head><title>Index of " << path << "</title></head>";
 	body_stream << "<body><h1>Index of " << path << "</h1><hr><ul>";
 
-	DIR* dir = opendir(directory.c_str());
+	DIR* dir = opendir(directory.c_str()); // La funcion opendir funcioan con un tipo de dato DIR
 	if (dir != NULL)
 	{
 		struct dirent* entry;
-		while ((entry = readdir(dir)) != NULL)
+		while ((entry = readdir(dir)) != NULL) // Lo mismo, readdir funciona con una estructura dirent
 		{
 			std::string name = entry->d_name;
-			if (name == ".")
-				continue;
+//			if (name == ".")
+//				continue;
 			std::string full_path = path;
 			if (full_path[full_path.length() - 1] != '/')
 				full_path += '/';
@@ -68,9 +68,10 @@ bool	DirectoryHandler::_isDirectory(const std::string& path)
 	struct stat statbuf;
 	if (stat(path.c_str(), &statbuf) != 0)
 		return (false);
-	return (S_ISDIR(statbuf.st_mode));
+	return (S_ISDIR(statbuf.st_mode)); // Devuelve true si es un directorio
 }
 
+// Funciona para leer un archivo
 std::string DirectoryHandler::_readFile(const std::string& path)
 {
 	std::ifstream file(path.c_str());
