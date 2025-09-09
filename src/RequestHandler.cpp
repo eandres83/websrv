@@ -11,8 +11,9 @@ Response RequestHandler::handle(const Request& request, const Config& config)
 	std::cout << "Ruta completa recibida: [" << full_path << "]" << std::endl;
 	std::cout << "¿Es un directorio? " << (_isDirectory(full_path) ? "Sí" : "No") << std::endl;
 	// --- FIN DE LÍNEAS DE DEBUG ---
-	// Si es un directorio, miro si tengo que gestionar el autoindex
-	if (_isDirectory(full_path))
+
+	// Si es un directorio y tengo permisos en la config, gestiono autoindex
+	if (_isDirectory(full_path) && config.getAutoindex())
 		return (DirectoryHandler::handle(request, config));
 	else
 		return (MethodHandler::handle(request, config));

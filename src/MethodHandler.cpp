@@ -15,7 +15,7 @@ Response MethodHandler::handle(const Request& request, const Config& config)
 	return (response);
 }
 
-// Implementacion de los metodos
+// --- Implementacion de los metodos ---
 
 Response MethodHandler::_handleGet(const Request& request, const Config& config)
 {
@@ -44,13 +44,14 @@ Response MethodHandler::_handlePost(const Request& request, const Config& config
 {
 	// Construimos la ruta donde se guardara el archivo
 	// Ej: si la petición es a /nuevo, la ruta sera ./www/nuevo
+	// Porque el rootDirecotry es ./www que se define en el archivo de confg
 	std::string full_path = config.getRootDirectory() + request.getPath();
 	Response response;
 
 	// Comprobamos si el recurso ya existe para evitar sobrescribirlo
 	if (access(full_path.c_str(), F_OK) == 0)
 	{
-		response.buildSimpleResponse("409", "Conflict"); // 409 Conflict es apropiado si el recurso ya existe
+		response.buildSimpleResponse("409", "Conflict"); // 409 Conflict si el recurso ya existe
 		return (response);
 	}
 
@@ -67,7 +68,6 @@ Response MethodHandler::_handlePost(const Request& request, const Config& config
 	new_file << request.getBody();
 	new_file.close();
 
-	// Si todo fue bien devolvemos un exito
 	response.buildSimpleResponse("201", "Created");
 	return (response);
 }
@@ -79,7 +79,7 @@ Response MethodHandler::_handleDelete(const Request& request, const Config& conf
 
 	if (access(full_path.c_str(), F_OK) == -1)
 	{
-		// Si el archivo no existe, no se puede borrar. Devolvemos 404.
+		// Si el archivo no existe, no se puede borrar. Devolvemos 404
 		response.buildSimpleResponse("404", "Not Found");
 	}
 	else if (remove(full_path.c_str()) == 0) // Intentamos borrarlo
@@ -106,6 +106,7 @@ std::string MethodHandler::_readFile(const std::string& path)
 	return (buffer.str());
 }
 
+// Funcion importante para saber que Content-Type es
 std::string MethodHandler::_getMimeType(const std::string& path)
 {
 	std::map<std::string, std::string> mime_types;

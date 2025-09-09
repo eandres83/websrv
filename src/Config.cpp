@@ -14,7 +14,7 @@ Config::~Config()
 bool Config::parse(const char* filename)
 {
 	(void)filename;
-	_port = 8080;
+	_port = 8081;
 	_root_directory = "./www";
 	_error_page_404 = "./www/404.html";
 	_autoindex = true;

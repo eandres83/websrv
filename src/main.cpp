@@ -3,13 +3,18 @@
 
 int main(int argc, char **argv)
 {
-	Config config;
-	if (!config.parse(argc > 1 ? argv[1] : "default.conf"))
-	{
-	        std::cerr << "Error al cargar la configuración." << std::endl;
-	        return 1;
-	}
+	(void)argc;
 
+	Config config;
+	config.parse(argv[1]);
+//	char *txt;
+
+//	if (argc == 1 && !config.parse(argv[1]));
+//	{
+//	        std::cerr << "Error al cargar la configuración." << std::endl;
+//	        return 1;
+//	}
+//
 	Server server(config);
 	server.run();
 
