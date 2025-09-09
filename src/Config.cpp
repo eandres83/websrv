@@ -18,6 +18,7 @@ bool Config::parse(const char* filename)
 	_root_directory = "./www";
 	_error_page_404 = "./www/404.html";
 	_autoindex = true;
+	_enable_reuse_addr = 1;
 
 	std::cout << "Configuración cargada. Puerto: " << _port << ", Root: " << _root_directory << std::endl;
 	return (true);
@@ -43,3 +44,7 @@ bool Config::getAutoindex() const
 	return (_autoindex);
 }
 
+int	Config::getReuseAddr() const
+{
+	return (_enable_reuse_addr);
+}

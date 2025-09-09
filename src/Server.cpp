@@ -15,6 +15,15 @@ Server::Server(const Config& config): _config(config)
 		exit(EXIT_FAILURE);
 	}
 
+	// Permitir reutilizar la dirección/puerto inmediatamente
+	int enable_reuse_addr = _config.getReuseAddr();
+	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &enable_reuse_addr, sizeof(enable_reuse_addr)) < 0)
+	{
+		perror("setsockopt SO_REUSEADDR failed");
+		close(server_fd);
+		exit(EXIT_FAILURE);
+	}
+
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(port);
