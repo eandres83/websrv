@@ -11,6 +11,8 @@ Response DirectoryHandler::handle(const Request& request, const Config& config)
 		response.buildSimpleResponse("500", "Internal Server Error");
 		return (response);
 	}
+
+	// Si index.html esta en el directorio tengo que habrirlo, si no autoindex
 	std::string index_path = full_path + "/index.html";
 
 	if (access(index_path.c_str(), F_OK) == 0) // Si index.html existe
@@ -20,12 +22,11 @@ Response DirectoryHandler::handle(const Request& request, const Config& config)
 	}
 	else // Si index.html no existe
 	{
+		// El objeto config llama a la funcion getAutoindex() que comprueba si esta activo en el archivo de configuracion
 		if (config.getAutoindex())
 			return (_generateAutoindexPage(path, full_path));
 		else
-		{
 			response.buildSimpleResponse("403", "Forbidden");
-		}
 	}
 	return (response);
 }
@@ -47,10 +48,8 @@ Response DirectoryHandler::_generateAutoindexPage(const std::string& path, const
 		while ((entry = readdir(dir)) != NULL) // Lo mismo, readdir funciona con una estructura dirent
 		{
 			std::string name = entry->d_name;
-//			if (name == ".")
-//				continue;
 			std::string full_path = path;
-			if (full_path[full_path.length() - 1] != '/')
+			if (full_path[full_path.length() - 1] != '/') // Compruebo si acaba con una '/' ns si es 100% necesario
 				full_path += '/';
 			body_stream << "<li><a href=\"" << full_path << name << "\">" << name << "</a></li>";
 		}
@@ -58,7 +57,7 @@ Response DirectoryHandler::_generateAutoindexPage(const std::string& path, const
 	}
 	body_stream << "</ul><hr></body></html>";
 
-	response.buildCustomResponse("200", "OK", body_stream.str());
+	response.buildCustomResponse("200", "OK", body_stream.str()); // Crea un response con el body que se ha ido creando
 	return (response);
 }
 
