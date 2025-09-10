@@ -15,7 +15,7 @@ Response MethodHandler::handle(const Request& request, const Config& config)
 	return (response);
 }
 
-// --- Implementacion de los metodos ---
+// --- Implementacion de los metodos --- 
 
 Response MethodHandler::_handleGet(const Request& request, const Config& config)
 {

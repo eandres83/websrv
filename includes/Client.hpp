@@ -5,11 +5,12 @@
 #include <iostream>
 #include <sys/socket.h>
 
-enum ClientState
+enum RequestState
 {
-	READING,
-	WRITING,
-	FINISHED
+	READING_HEADERS,
+	READING_BODY,
+	READING_READY,
+	READING_SENT
 };
 
 class Client
@@ -18,7 +19,9 @@ class Client
 		int		_socket_fd;
 		std::string	_request_buffer;
 		std::string	_response_buffer;
-		ClientState	_state;
+		
+		Request		_request;
+		RequestState	_request_state;
 
 	public:
 		Client(int fd);
@@ -26,9 +29,10 @@ class Client
 
 		// --- Getters ---
 		int		getSocketFd() const;
-		ClientState	getState() const;
 		std::string&	getResponseBuffer();
 		std::string&	getRequestBuffer();
+		Request&	getRequest();
+		RequestState	getState() const;
 
 		// --- Setters y metodos de accion ---
 		void		setState(ClientState new_state);
