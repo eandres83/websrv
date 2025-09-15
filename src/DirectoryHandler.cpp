@@ -1,33 +1,34 @@
 #include "../includes/DirectoryHandler.hpp"
 
-Response DirectoryHandler::handle(const Request& request, const Config& config)
+Response DirectoryHandler::handle(Client& client, const LocationConfig* location)
 {
-	std::string path = request.getPath();
-	std::string full_path = config.getRootDirectory() + path;
+	const Request& request = client.getRequest();
+	const ServerConfig& config = client.getConfig();
+
+	std::string full_path = config.root_directory + request.getPath();
 	Response response;
 
-	if (!_isDirectory(full_path))
+	// 1. Iterar sobre la lista de archivos index definidos en la config
+	for (size_t i = 0; i < location->index_files.size(); ++i)
 	{
-		response.buildSimpleResponse("500", "Internal Server Error");
-		return (response);
+		std::string index_path = full_path + "/" + location->index_files[i];
+		if (access(index_path.c_str(), F_OK) == 0)
+		{
+			response.buildCustomResponse("200", "OK", _readFile(index_path));
+			response.addHeader("Content-Type", "text/html");
+			return (response);
+		}
 	}
 
-	// Si index.html esta en el directorio tengo que habrirlo, si no autoindex
-	std::string index_path = full_path + "/index.html";
+	// 2. Si no se encontró ningún archivo index, comprobar autoindex
+	bool	autoindex_on = config.autoindex;
+	if (location)
+		autoindex_on = location->autoindex;
 
-	if (access(index_path.c_str(), F_OK) == 0) // Si index.html existe
-	{
-		response.buildCustomResponse("200", "OK", _readFile(index_path));
-		response.addHeader("Content-Type", "text/html");
-	}
-	else // Si index.html no existe
-	{
-		// El objeto config llama a la funcion getAutoindex() que comprueba si esta activo en el archivo de configuracion
-		if (config.getAutoindex())
-			return (_generateAutoindexPage(path, full_path));
-		else
-			response.buildSimpleResponse("403", "Forbidden");
-	}
+	if (autoindex_on)
+		return (_generateAutoindexPage(request.getPath(), full_path));
+
+	response.buildErrorResponse(403, config); // 403 Forbidden
 	return (response);
 }
 

@@ -4,6 +4,7 @@
 #include "Request.hpp"
 #include "Response.hpp"
 #include "Config.hpp"
+#include "Client.hpp"
 #include <fstream>
 #include <unistd.h>
 #include <dirent.h>
@@ -14,9 +15,10 @@ class RequestHandler
 {
 	private:
 		static bool _isDirectory(const std::string& path);
+		static const LocationConfig* _findLocationForPath(const std::string& path, const ServerConfig& config);
 
 	public:
-		static Response handle(const Request& request, const Config& config);
+		static Response handle(Client& client);
 		
 };
 

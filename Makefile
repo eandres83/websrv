@@ -7,7 +7,17 @@ RM = rm -rf
 SRC_DIR = ./src/
 OBJ_DIR = ./objects/
 
-SRC = $(shell find $(SRC_DIR) -type f -name "*.cpp")
+SRC = src/Request.cpp \
+	src/CGI.cpp \
+	src/Config.cpp \
+	src/DirectoryHandler.cpp \
+	src/main.cpp \
+	src/Client.cpp \
+	src/MethodHandler.cpp \
+	src/Server.cpp \
+	src/RequestHandler.cpp \
+	src/Response.cpp \
+
 OBJS = $(SRC:$(SRC_DIR)%.cpp=$(OBJ_DIR)%.o)
 
 all: $(NAME)

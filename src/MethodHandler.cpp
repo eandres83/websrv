@@ -1,14 +1,16 @@
 #include "../includes/MethodHandler.hpp"
 
 // Funcion principal que gestiona todo los metodos
-Response MethodHandler::handle(const Request& request, const Config& config)
+Response MethodHandler::handle(Client& client)
 {
-	if (request.getMethod() == "GET")
-		return (_handleGet(request, config));
-	else if (request.getMethod() == "POST")
-		return (_handlePost(request, config));
-	else if (request.getMethod() == "DELETE")
-		return (_handleDelete(request, config));
+//	const std::string& method = client.getRequest().getMethod();
+
+	if (client.getRequest().getMethod() == "GET")
+		return (_handleGet(client));
+	else if (client.getRequest().getMethod() == "POST")
+		return (_handlePost(client));
+	else if (client.getRequest().getMethod() == "DELETE")
+		return (_handleDelete(client));
 
 	Response response;
 	response.buildSimpleResponse("501", "Not Implemented");
@@ -17,20 +19,18 @@ Response MethodHandler::handle(const Request& request, const Config& config)
 
 // --- Implementacion de los metodos --- 
 
-Response MethodHandler::_handleGet(const Request& request, const Config& config)
+Response MethodHandler::_handleGet(Client& client)
 {
-	std::string full_path = config.getRootDirectory() + request.getPath();
+	const Request& request = client.getRequest();
+	const ServerConfig& config = client.getConfig();
+
+	std::string full_path = config.root_directory + request.getPath();
+
 	Response response;
 
 	if (access(full_path.c_str(), F_OK) == -1) // Si el archivo no existe
 	{
-		response.setStatusCode("404", "Not Found");
-		std::string error_body = _readFile(config.getErrorPage404());
-		if (error_body.empty())
-			response.setBody("404 Not Found");
-		else
-			response.setBody(error_body);
-		response.addHeader("Content-Type", "text/html");
+		response.buildErrorResponse(404, config);
 	}
 	else // Si el archivo existe
 	{
@@ -40,12 +40,15 @@ Response MethodHandler::_handleGet(const Request& request, const Config& config)
 	return (response);
 }
 
-Response MethodHandler::_handlePost(const Request& request, const Config& config)
+Response MethodHandler::_handlePost(Client& client)
 {
 	// Construimos la ruta donde se guardara el archivo
 	// Ej: si la petición es a /nuevo, la ruta sera ./www/nuevo
 	// Porque el rootDirecotry es ./www que se define en el archivo de confg
-	std::string full_path = config.getRootDirectory() + request.getPath();
+	const Request& request = client.getRequest();
+	const ServerConfig& config = client.getConfig();
+
+	std::string full_path = config.root_directory + request.getPath();
 	Response response;
 
 	// Comprobamos si el recurso ya existe para evitar sobrescribirlo
@@ -72,9 +75,12 @@ Response MethodHandler::_handlePost(const Request& request, const Config& config
 	return (response);
 }
 
-Response MethodHandler::_handleDelete(const Request& request, const Config& config)
+Response MethodHandler::_handleDelete(Client& client)
 {
-	std::string full_path = config.getRootDirectory() + request.getPath();
+	const Request& request = client.getRequest();
+	const ServerConfig& config = client.getConfig();
+
+	std::string full_path = config.root_directory + request.getPath();
 	Response response;
 
 	if (access(full_path.c_str(), F_OK) == -1)

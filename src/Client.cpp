@@ -1,13 +1,11 @@
 #include "../includes/Client.hpp"
 
-Client::Client(int fd) : _socket_fd(fd), _state(READING)
+Client::Client(int fd, const ServerConfig& config) : _socket_fd(fd), _bytes_sent(0), _state(READING_HEADERS), _config(config)
 {
-	std::cout << "Default Client constructor called" << std::endl;
 }
 
 Client::~Client()
 {
-	std::cout << "Default Client destructor called" << std::endl;
 }
 
 // --- Implementacion de Getters ---
@@ -32,6 +30,21 @@ std::string& Client::getRequestBuffer()
 	return (_request_buffer);
 }
 
+size_t Client::getBytesSent() const
+{
+	return (_bytes_sent);
+}
+
+const ServerConfig& Client::getConfig() const
+{
+	return (_config);
+}
+
+Request& Client::getRequest()
+{
+	return (_request);
+}
+
 // --- Implementacion de Setters y Metodos ---
 
 void	Client::setState(ClientState new_state)
@@ -47,5 +60,10 @@ void	Client::appendToRequestBuffer(const char* data, size_t len)
 void	Client::setResponseBuffer(const std::string& response)
 {
 	_response_buffer = response;
+}
+
+void	Client::incrementBytesSent(size_t bytes)
+{
+	_bytes_sent += bytes;
 }
 
