@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 #include <map>
+#include "Config.hpp"
 
 class Response
 {
@@ -25,6 +26,7 @@ class Response
 		std::string toString() const;
 		void buildSimpleResponse(const std::string& code, const std::string& message);
 		void buildCustomResponse(const std::string& code, const std::string& message, const std::string& body);
+		void buildErrorResponse(int error_code, const ServerConfig& config);
 
 };
 

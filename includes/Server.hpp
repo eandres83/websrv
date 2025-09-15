@@ -6,6 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include <cstdio>
+#include <stdexcept>
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
@@ -28,6 +29,7 @@ class Server
 		const Config& _config;
 		std::map<int, Client> _clients;
 		std::vector<int> _listenSockets;
+		std::map<int, ServerConfig> _listener_configs;
 
 		void acceptNewConnection(int listener_fd, int epoll_fd);
 		void handleClientRequest(int client_fd, int epoll_fd);

@@ -4,6 +4,7 @@
 #include "Response.hpp"
 #include "Request.hpp"
 #include "Config.hpp"
+#include "Client.hpp"
 #include <fstream>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -17,7 +18,7 @@ class DirectoryHandler
 		static std::string _readFile(const std::string& path);
 
 	public:
-		static Response handle(const Request& request, const Config& config);
+		static Response handle(Client& client, const LocationConfig* location);
 
 };
 

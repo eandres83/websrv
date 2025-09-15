@@ -45,6 +45,7 @@ class Request
 		int			getErrorCode() const;
 
 		std::string getHeaderValue(const std::string& header_name) const;
+		void		setBody(const std::string& body);
 
 };
 

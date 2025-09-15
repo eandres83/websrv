@@ -4,43 +4,49 @@
 
 Server::Server(const Config& config): _config(config)
 {
-	// Esta seccion inicializa y vincula los sockets de escucha del servidor
-	int port = _config.getPort();
-	int server_fd;
-	struct sockaddr_in address;
+	// Obtenemos el vector de todas las configs del server
+	const std::vector<ServerConfig>& server_configs = _config.getServerConfigs();
 
-	if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+	for (size_t i = 0; i < server_configs.size(); i++)
 	{
-		perror("socket failed");
-		exit(EXIT_FAILURE);
-	}
+		const ServerConfig& sc = server_configs[i];
+		int port = sc.port;
+		int server_fd;
+		struct sockaddr_in address;
 
-	// Permitir reutilizar la dirección/puerto inmediatamente
-	int enable_reuse_addr = _config.getReuseAddr();
-	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &enable_reuse_addr, sizeof(enable_reuse_addr)) < 0)
-	{
-		perror("setsockopt SO_REUSEADDR failed");
-		close(server_fd);
-		exit(EXIT_FAILURE);
+		if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+		{
+			throw std::runtime_error("Error fatal: socket() fallo");
+		}
+	
+		// Permitir reutilizar la dirección/puerto inmediatamente
+		int enable_reuse_addr = sc.enable_reuse_addr;
+		if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &enable_reuse_addr, sizeof(enable_reuse_addr)) < 0)
+		{
+			close(server_fd);
+			throw std::runtime_error("Error fatal: setsockopt() fallo");
+		}
+	
+		address.sin_family = AF_INET;
+		address.sin_addr.s_addr = INADDR_ANY;
+		address.sin_port = htons(port);
+	
+		if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
+		{
+			close(server_fd);
+			throw std::runtime_error("Error fatal: bind() fallo");
+		}
+	
+		if (listen(server_fd, 10) < 0)
+		{
+			close(server_fd);
+			throw std::runtime_error("Error fatal: listen() fallo");
+		}
+		// Guardamos el nuevo socket de escucha
+		_listenSockets.push_back(server_fd);
+		_listener_configs[server_fd] = sc; // Asociamos el fd con su config por si tenemos varios servidores
+		std::cout << "Servidor escuchando en el puerto " << port << std::endl;
 	}
-
-	address.sin_family = AF_INET;
-	address.sin_addr.s_addr = INADDR_ANY;
-	address.sin_port = htons(port);
-
-	if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
-	{
-		perror("bind failed");
-		exit(EXIT_FAILURE);
-	}
-
-	if (listen(server_fd, 10) < 0)
-	{
-		perror("listen failed");
-		exit(EXIT_FAILURE);
-	}
-	_listenSockets.push_back(server_fd);
-	std::cout << "Servidor escuchando en el puerto " << port << std::endl;
 }
 
 Server::~Server()
@@ -52,10 +58,7 @@ void Server::run()
 {
 	int epoll_fd = epoll_create1(0);
 	if (epoll_fd == -1)
-	{
-		perror("epoll_create1");
-		exit(EXIT_FAILURE);
-	}
+		throw std::runtime_error("Error fatal: epoll_create");
 
 	const int MAX_EVENTS = 64;
 	struct epoll_event events[MAX_EVENTS];
@@ -67,10 +70,7 @@ void Server::run()
 		event.events = EPOLLIN;
 		event.data.fd = _listenSockets[i];
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, _listenSockets[i], &event) == -1)
-		{
-			perror("epoll_ctl: listen_socket");
-			exit(EXIT_FAILURE);
-		}
+			throw std::runtime_error("Error fatal: epoll_ctl");
 	}
 
 	// Bucle principal de eventos del servidor
@@ -79,11 +79,7 @@ void Server::run()
 		// epoll_wait bloquea hasta que ocurra un evento en los sockets monitorizados
 		int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
 		if (nfds == -1)
-		{
-			perror("epoll_wait");
-			exit(EXIT_FAILURE);
-		}
-
+			throw std::runtime_error("Error fatal: epoll_wait");
 		for (int i = 0; i < nfds; ++i)
 		{
 			int current_fd = events[i].data.fd;
@@ -101,10 +97,16 @@ void Server::run()
 				acceptNewConnection(current_fd, epoll_fd);
 			else
 			{
-				if (events[i].events & EPOLLIN) // Hay datos para leer del cliente
-					handleClientRequest(current_fd, epoll_fd);
-				else if (events[i].events & EPOLLOUT) // Se puede escribir al cliente
+				std::map<int, Client>::iterator it = _clients.find(current_fd);
+				if (it == _clients.end())
+					continue; // Cliente no encontrado, seguimos
+				Client& client = it->second;
+
+				// La logica ahora depende directamente del estado del cliente
+				if (client.getState() == WRITING && (events[i].events & EPOLLOUT))
 					handleClientResponse(current_fd, epoll_fd);
+				else if (client.getState() == READING_HEADERS && (events[i].events & EPOLLIN))
+					handleClientRequest(current_fd, epoll_fd);
 			}
 		}
 	}
@@ -120,9 +122,11 @@ void Server::acceptNewConnection(int listener_fd, int epoll_fd)
 	}
 	fcntl(client_socket, F_SETFL, O_NONBLOCK);
 
-	// Registra el nuevo cliente en el mapa y lo anade a epoll para leer su peticion
-	_clients.insert(std::make_pair(client_socket, Client(client_socket)));
-	std::cout << "Nuevo cliente conectado con fd: " << client_socket << std::endl;
+	// Buscamos la configuracion correcta usando el listener_fd
+	const ServerConfig& client_config = _listener_configs.at(listener_fd);
+	// Creamos el cliente, pasandole su configuracion especifica
+	_clients.insert(std::make_pair(client_socket, Client(client_socket, client_config)));
+	std::cout << "Nuevo cliente conectado en puerto " << client_config.port << " con fd: " << client_socket << std::endl;
 
 	struct epoll_event client_event;
 	client_event.events = EPOLLIN | EPOLLET; // Edge-Triggered para eficiencia.
@@ -137,61 +141,146 @@ void Server::acceptNewConnection(int listener_fd, int epoll_fd)
 
 void Server::handleClientRequest(int client_fd, int epoll_fd)
 {
+	// --- 1. Encontrar al cliente y su configuración ---
+	std::map<int, Client>::iterator it = _clients.find(client_fd);
+	if (it == _clients.end())
+		return; // Si el cliente no existe, no hacemos nada
+	Client& client = it->second;
+	const ServerConfig& config = client.getConfig();
+
+	// --- 2. Leer del socket ---
 	char buffer[1024];
 	ssize_t bytes_read;
 
-	// Bucle para leer todos los datos disponibles
-	// Esto se hace porque si el cliente envia 2000 bytes solo se almacenan 1024 en bytes_read
 	while (true)
 	{
 		bytes_read = read(client_fd, buffer, sizeof(buffer));
-		if (bytes_read == -1)
+		if (bytes_read > 0)
+		{
+			std::cout << buffer << std::endl;
+			client.appendToRequestBuffer(buffer, bytes_read);
+			if (client.getRequestBuffer().length() > static_cast<size_t>(config.client_max_body_size))
+			{
+				std::cout << "Payloada Too Large" << std::endl;
+				Response response;
+				response.buildErrorResponse(413, config); // 413 Payload Too Large
+				client.setResponseBuffer(response.toString());
+				client.setState(WRITING);
+		
+				struct epoll_event client_event;
+				client_event.events = EPOLLOUT | EPOLLET;
+				client_event.data.fd = client_fd;
+				epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &client_event);
+				return;
+			}
+		}
+		else if (bytes_read == 0)
+		{
+			closeClientConnection(client_fd, epoll_fd);
+			return;
+		}
+		else
 		{
 			if (errno == EAGAIN || errno == EWOULDBLOCK)
-				break ;
+				break;
+			std::cout << "Error en read" << std::endl;
 			closeClientConnection(client_fd, epoll_fd);
-			return ;
+			return;
 		}
-		if (bytes_read == 0)
-		{
-			closeClientConnection(client_fd, epoll_fd);
-			return ;
-		}
-		_clients.at(client_fd).appendToRequestBuffer(buffer, bytes_read);
 	}
 
-	// El parser de igchurru ira aqui. Por ahora, lo simulamos
-	Request request;
-	request.parse(_clients.at(client_fd).getRequestBuffer()); // El parser llenara el objeto request
+	// --- 5. Máquina de estados para el parseo ---
+	if (client.getState() == READING_HEADERS)
+	{
+		size_t end_of_headers = client.getRequestBuffer().find("\r\n\r\n");
+		if (end_of_headers != std::string::npos)
+		{
+			std::string header_part = client.getRequestBuffer().substr(0, end_of_headers);
+			client.getRequest().parse(header_part);
 
-	// Le pasamos la peticion al handler para que haga todo el trabajo
-	Response response = RequestHandler::handle(request, _config);
+			std::string body_part = client.getRequestBuffer().substr(end_of_headers + 4);
+			client.getRequest().setBody(body_part);
 
-	// Tomamos la respuesta y la preparamos para el envio.
-	_clients.at(client_fd).setResponseBuffer(response.toString());
-	_clients.at(client_fd).setState(WRITING);
+			std::string cl_value = client.getRequest().getHeaderValue("Content-Length");
+			if (!cl_value.empty())
+			{
+				long len = std::strtol(cl_value.c_str(), NULL, 10);
+				if (client.getRequest().getBody().length() < static_cast<size_t>(len))
+					client.setState(READING_BODY);
+				else
+					client.setState(REQUEST_READY);
+			}
+			else
+				client.setState(REQUEST_READY);
+		}
+	}
 
-	// Modificamos epoll para vigilar eventos de escritura (EPOLLOUT)
-	struct epoll_event client_event;
-	client_event.events = EPOLLOUT | EPOLLET;
-	client_event.data.fd = client_fd;
-	epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &client_event);
+	if (client.getState() == READING_BODY)
+	{
+		std::string cl_value = client.getRequest().getHeaderValue("Content-Length");
+		long len = std::strtol(cl_value.c_str(), NULL, 10);
+		if (client.getRequest().getBody().length() >= static_cast<size_t>(len))
+		{
+			client.setState(REQUEST_READY);
+		}
+	}
+
+	if (client.getState() == REQUEST_READY)
+	{
+		Response response = RequestHandler::handle(client);
+		client.setResponseBuffer(response.toString());
+		client.setState(WRITING);
+
+		struct epoll_event client_event;
+		client_event.events = EPOLLOUT | EPOLLET;
+		client_event.data.fd = client_fd;
+		epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &client_event);
+	}
 }
 
 void Server::handleClientResponse(int client_fd, int epoll_fd)
 {
-	std::string& response = _clients.at(client_fd).getResponseBuffer();
-	ssize_t bytes_sent = write(client_fd, response.c_str(), response.length());
+	std::map<int, Client>::iterator it = _clients.find(client_fd);
+	if (it == _clients.end())
+		return;
+	Client& client = it->second;
 
-	if (bytes_sent == -1)
+	const std::string& response = client.getResponseBuffer();
+	size_t total_size = response.length();
+	size_t bytes_sent = client.getBytesSent();
+	size_t remaining = total_size - bytes_sent;
+
+	if (remaining == 0) // No debería pasar, pero por si acaso
 	{
 		closeClientConnection(client_fd, epoll_fd);
 		return;
 	}
 
-	// Una vez enviada la respuesta, se cierra la conexion (comportamiento simple)
-	std::cout << "Respuesta enviada al cliente " << client_fd << std::endl;
-	closeClientConnection(client_fd, epoll_fd);
+	// Intentamos enviar los datos restantes
+	ssize_t sent_now = write(client_fd, response.c_str() + bytes_sent, remaining);
+
+	if (sent_now == -1)
+	{
+		// Si hay un error real (no solo que el buffer está lleno), cerramos.
+		if (errno != EAGAIN && errno != EWOULDBLOCK)
+		{
+			std::cerr << "Error al escribir en el socket del cliente " << client_fd << std::endl;
+			closeClientConnection(client_fd, epoll_fd);
+		}
+		// Si es EAGAIN, simplemente esperamos al siguiente evento EPOLLOUT
+		return;
+	}
+
+	client.incrementBytesSent(sent_now);
+
+	// Comprobamos si ya hemos terminado de enviar todo
+	if (client.getBytesSent() == total_size)
+	{
+		std::cout << "Respuesta enviada completamente al cliente " << client_fd << std::endl;
+		closeClientConnection(client_fd, epoll_fd);
+	}
+	// Si no, NO hacemos nada. El servidor esperará el próximo evento EPOLLOUT
+	// para volver a llamar a esta función y enviar el siguiente trozo.
 }
 
 void Server::closeClientConnection(int client_fd, int epoll_fd)

@@ -93,15 +93,22 @@ bool	Request::parse(const std::string& raw_request)
 			return (false);
 		}
 	}
-	if (request_stream.good())
-	{
-		std::stringstream body_stream;
-		body_stream << request_stream.rdbuf();
-		_body = body_stream.str();
-	}
+//	if (request_stream.good())
+//	{
+//		std::stringstream body_stream;
+//		body_stream << request_stream.rdbuf();
+//		_body = body_stream.str();
+//	}
 
 	_is_parsed = true;
 	return (true);
+}
+
+// --- Seters ---
+
+void	Request::setBody(const std::string& body)
+{
+	_body = body;
 }
 
 // --- Geters ---
