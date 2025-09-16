@@ -19,6 +19,7 @@
 #include "Client.hpp"
 #include "Config.hpp"
 #include "Response.hpp"
+#include "Colors.hpp"
 
 #define MAX_FDS 200
 
