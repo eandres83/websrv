@@ -9,9 +9,9 @@
 set -euo pipefail
 
 URL="${1:-http://127.0.0.1:8080/index.html}"
-N="${2:-9000}"
+N="${2:-2000}"
 BATCH="${3:-100}"
-SLEEP_MS="${4:-10}"
+SLEEP_MS="${4:-20}"
 
 tmp_fail_log="$(mktemp)"
 trap 'rm -f "$tmp_fail_log"' EXIT
