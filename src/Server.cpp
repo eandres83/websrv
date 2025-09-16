@@ -117,10 +117,14 @@ void Server::acceptNewConnection(int listener_fd, int epoll_fd)
 	int client_socket = accept(listener_fd, NULL, NULL);
 	if (client_socket == -1)
 	{
-		perror("accept");
+		std::cerr << "accept" << std::endl;
 		return;
 	}
-	fcntl(client_socket, F_SETFL, O_NONBLOCK);
+	if (fcntl(client_socket, F_SETFL, O_NONBLOCK) == -1)
+	{
+		std::cerr << "Error: fcntl" << std::endl;
+		return;
+	}
 
 	// Buscamos la configuracion correcta usando el listener_fd
 	const ServerConfig& client_config = _listener_configs.at(listener_fd);
@@ -133,63 +137,60 @@ void Server::acceptNewConnection(int listener_fd, int epoll_fd)
 	client_event.data.fd = client_socket;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket, &client_event) == -1)
 	{
-		perror("epoll_ctl: add client_socket");
+		std::cerr << "epoll_ctl: add client_socket" << std::endl;
 		close(client_socket);
 		_clients.erase(client_socket);
 	}
 }
 
+// websrv/src/Server.cpp
+
 void Server::handleClientRequest(int client_fd, int epoll_fd)
 {
-	// --- 1. Encontrar al cliente y su configuración ---
-	std::map<int, Client>::iterator it = _clients.find(client_fd);
-	if (it == _clients.end())
-		return; // Si el cliente no existe, no hacemos nada
-	Client& client = it->second;
+	Client& client = _clients.at(client_fd);
 	const ServerConfig& config = client.getConfig();
-
-	// --- 2. Leer del socket ---
-	char buffer[1024];
+	char buffer[4096];
 	ssize_t bytes_read;
 
+	// --- 1. Leer del socket en un bucle ---
+	// Con EPOLLET, leemos hasta que el buffer del kernel esté vacío.
 	while (true)
 	{
 		bytes_read = read(client_fd, buffer, sizeof(buffer));
 		if (bytes_read > 0)
 		{
-			std::cout << buffer << std::endl;
 			client.appendToRequestBuffer(buffer, bytes_read);
-			if (client.getRequestBuffer().length() > static_cast<size_t>(config.client_max_body_size))
-			{
-				std::cout << "Payloada Too Large" << std::endl;
-				Response response;
-				response.buildErrorResponse(413, config); // 413 Payload Too Large
-				client.setResponseBuffer(response.toString());
-				client.setState(WRITING);
-		
-				struct epoll_event client_event;
-				client_event.events = EPOLLOUT | EPOLLET;
-				client_event.data.fd = client_fd;
-				epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &client_event);
-				return;
-			}
 		}
 		else if (bytes_read == 0)
 		{
+			// El cliente cerró la conexión.
 			closeClientConnection(client_fd, epoll_fd);
 			return;
 		}
-		else
+		else // bytes_read == -1
 		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-				break;
-			std::cout << "Error en read" << std::endl;
-			closeClientConnection(client_fd, epoll_fd);
-			return;
+			// Un -1 en un socket no bloqueante significa "no hay más datos por ahora".
+			// Rompemos el bucle para procesar lo que hemos leído.
+			break;
 		}
 	}
 
-	// --- 5. Máquina de estados para el parseo ---
+	// --- 2. Comprobar si el tamaño excede el límite ---
+	if (client.getRequestBuffer().length() > static_cast<size_t>(config.client_max_body_size))
+	{
+		Response response;
+		response.buildErrorResponse(413, config); // 413 Payload Too Large
+		client.setResponseBuffer(response.toString());
+		client.setState(WRITING);
+
+		struct epoll_event ev;
+		ev.events = EPOLLOUT | EPOLLET;
+		ev.data.fd = client_fd;
+		epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &ev);
+		return;
+	}
+
+	// --- 3. Máquina de estados para el parseo ---
 	if (client.getState() == READING_HEADERS)
 	{
 		size_t end_of_headers = client.getRequestBuffer().find("\r\n\r\n");
@@ -204,23 +205,29 @@ void Server::handleClientRequest(int client_fd, int epoll_fd)
 			std::string cl_value = client.getRequest().getHeaderValue("Content-Length");
 			if (!cl_value.empty())
 			{
-				long len = std::strtol(cl_value.c_str(), NULL, 10);
-				if (client.getRequest().getBody().length() < static_cast<size_t>(len))
-					client.setState(READING_BODY);
-				else
-					client.setState(REQUEST_READY);
+				client.setState(READING_BODY);
+				// No hacemos 'return', continuamos al siguiente 'if' por si el body ya está completo.
 			}
 			else
+			{
 				client.setState(REQUEST_READY);
+			}
 		}
 	}
 
 	if (client.getState() == READING_BODY)
 	{
+		size_t headers_len = client.getRequestBuffer().find("\r\n\r\n") + 4;
+		client.getRequest().setBody(client.getRequestBuffer().substr(headers_len));
+		
 		std::string cl_value = client.getRequest().getHeaderValue("Content-Length");
-		long len = std::strtol(cl_value.c_str(), NULL, 10);
-		if (client.getRequest().getBody().length() >= static_cast<size_t>(len))
+		char* end = NULL;
+		unsigned long len = std::strtoul(cl_value.c_str(), &end, 10);
+		
+		if (client.getRequest().getBody().length() >= len)
 		{
+			// Nos aseguramos de que el body no contenga datos de más.
+			client.getRequest().setBody(client.getRequest().getBody().substr(0, len));
 			client.setState(REQUEST_READY);
 		}
 	}
@@ -261,13 +268,8 @@ void Server::handleClientResponse(int client_fd, int epoll_fd)
 
 	if (sent_now == -1)
 	{
-		// Si hay un error real (no solo que el buffer está lleno), cerramos.
-		if (errno != EAGAIN && errno != EWOULDBLOCK)
-		{
-			std::cerr << "Error al escribir en el socket del cliente " << client_fd << std::endl;
-			closeClientConnection(client_fd, epoll_fd);
-		}
-		// Si es EAGAIN, simplemente esperamos al siguiente evento EPOLLOUT
+		std::cerr << "Error al escribir en el socket del cliente " << client_fd << ", cerrando conextion." << std::endl;
+		closeClientConnection(client_fd, epoll_fd);
 		return;
 	}
 
