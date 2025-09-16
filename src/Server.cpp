@@ -149,32 +149,17 @@ void Server::handleClientRequest(int client_fd, int epoll_fd)
 {
 	Client& client = _clients.at(client_fd);
 	const ServerConfig& config = client.getConfig();
-	char buffer[100000];
+	char buffer[4096];
 	ssize_t bytes_read;
 
 	// --- 1. Leer del socket en un bucle ---
 	// Con EPOLLET, leemos hasta que el buffer del kernel esté vacío.
-
 	while (true)
 	{
 		bytes_read = read(client_fd, buffer, sizeof(buffer));
 		if (bytes_read > 0)
 		{
 			client.appendToRequestBuffer(buffer, bytes_read);
-			if (client.getRequestBuffer().length() > static_cast<size_t>(config.client_max_body_size))
-			{
-				std::cout << "Payloada Too Large" << std::endl;
-				Response response;
-				response.buildErrorResponse(413, config); // 413 Payload Too Large
-				client.setResponseBuffer(response.toString());
-				client.setState(WRITING);
-
-				struct epoll_event client_event;
-				client_event.events = EPOLLOUT | EPOLLET;
-				client_event.data.fd = client_fd;
-				epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &client_event);
-				return;
-			}
 		}
 		else if (bytes_read == 0)	// Comprobamos si ya hemos terminado de enviar todo
 
