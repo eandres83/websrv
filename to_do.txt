@@ -1,0 +1,2 @@
+Cambiar el codigo de salida de un DELETE.
+Arreglar la gestion de un archivo muy grande.
