@@ -34,8 +34,16 @@ Response MethodHandler::_handleGet(Client& client)
 	}
 	else // Si el archivo existe
 	{
-		response.buildCustomResponse("200", "OK", _readFile(full_path));
-		response.addHeader("Content-Type", _getMimeType(full_path));
+		if (request.getIsCGI())
+		{
+			// LOGICA DEL CGI
+			
+		}
+		else
+		{
+			response.buildCustomResponse("200", "OK", _readFile(full_path));
+			response.addHeader("Content-Type", _getMimeType(full_path));
+		}
 	}
 	return (response);
 }

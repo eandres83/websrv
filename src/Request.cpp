@@ -25,6 +25,8 @@ bool	Request::_parseRequestLine(const std::string& line)
 	{
 		_path = full_path;
 	}
+	if (_path.find("/cgi-bin/") != std::string::npos)
+		this->_isCGI = true;
 	return (true);
 }
 
@@ -49,7 +51,7 @@ bool	Request::_parseHeaderLine(const std::string& line)
 
 // --- Metodos publicos ---
 
-Request::Request(): _is_parsed(false), _error_code(0)
+Request::Request(): _is_parsed(false), _error_code(0) , _isCGI(false)
 {
 //	std::cout << "Request constructor" << std::endl;
 }
@@ -161,3 +163,7 @@ std::string Request::getHeaderValue(const std::string& header_name) const
 	return ("");
 }
 
+const bool Request::getIsCGI() const
+{
+	return (_isCGI);
+}
