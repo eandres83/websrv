@@ -17,6 +17,7 @@ SRC = src/Request.cpp \
 	src/Server.cpp \
 	src/RequestHandler.cpp \
 	src/Response.cpp \
+	src/Logger.cpp \
 
 OBJS = $(SRC:$(SRC_DIR)%.cpp=$(OBJ_DIR)%.o)
 

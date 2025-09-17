@@ -1,29 +1,31 @@
 #include "../includes/Server.hpp"
 #include "../includes/Config.hpp"
+#include "../includes/Logger.hpp"
 
 int main(int argc, char **argv)
 {
 	if (argc != 2)
 	{
-		std::cerr << "Uso: " << argv[0] << " <archivo_de_configuracion>" << std::endl;
+		Logger::log(FATAL, "Uso: " + std::string(argv[0]) + " <archivo_de_configuracion>");
 		return (1);
 	}
 
 	Config config;
 	if (!config.parse(argv[1]))
 	{
-		std::cerr << "Error al cargar la configuracion." << std::endl;
+		Logger::log(FATAL, "Error al cargar la configuracion.");
 		return (1);
 	}
 
 	try
 	{
 		Server server(config);
+		Logger::log(INFO, "Server is ready to run");
 		server.run();
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << "Error: " << e.what() << std::endl;
+		Logger::log(FATAL, "Error " + std::string(e.what()));
 		return (1);
 	}
 

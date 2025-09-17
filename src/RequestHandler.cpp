@@ -1,6 +1,7 @@
 #include "../includes/RequestHandler.hpp"
 #include "../includes/MethodHandler.hpp"
 #include "../includes/DirectoryHandler.hpp"
+#include "../includes/Logger.hpp"
 #include <sys/stat.h>
 #include <algorithm>
 
@@ -30,6 +31,7 @@ Response RequestHandler::handle(Client& client)
 	const ServerConfig& config = client.getConfig();
 	Response response;
 
+	Logger::log(TRACE, request.getMethod() + " " + request.getPath() + " " + request.getHttpVersion());
 	// 1. Encontrar la location que corresponde a este peticion
 	const LocationConfig* location = _findLocationForPath(request.getPath(), config);
 

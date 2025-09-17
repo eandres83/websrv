@@ -1,6 +1,7 @@
 #include "../includes/Server.hpp"
 #include "../includes/Request.hpp"
 #include "../includes/RequestHandler.hpp"
+#include "../includes/Logger.hpp"
 
 Server::Server(const Config& config): _config(config)
 {
@@ -45,7 +46,9 @@ Server::Server(const Config& config): _config(config)
 		// Guardamos el nuevo socket de escucha
 		_listenSockets.push_back(server_fd);
 		_listener_configs[server_fd] = sc; // Asociamos el fd con su config por si tenemos varios servidores
-		std::cout << "Servidor escuchando en el puerto " << port << std::endl;
+		std::stringstream ss;
+		ss << "Initializing socket on 0.0.0.0:" << port;
+		Logger::log(INFO, ss.str());
 	}
 }
 
@@ -73,6 +76,7 @@ void Server::run()
 			throw std::runtime_error("Error fatal: epoll_ctl");
 	}
 
+	Logger::log(INFO, "Server is running");
 	// Bucle principal de eventos del servidor
 	while (true)
 	{
@@ -130,7 +134,10 @@ void Server::acceptNewConnection(int listener_fd, int epoll_fd)
 	const ServerConfig& client_config = _listener_configs.at(listener_fd);
 	// Creamos el cliente, pasandole su configuracion especifica
 	_clients.insert(std::make_pair(client_socket, Client(client_socket, client_config)));
-	std::cout << "Nuevo cliente conectado en puerto " << client_config.port << " con fd: " << client_socket << std::endl;
+
+	std::stringstream ss;
+	ss << "New client connected on port " << client_config.port << " with fd: " << client_socket;
+	Logger::log(INFO, ss.str());
 
 	struct epoll_event client_event;
 	client_event.events = EPOLLIN | EPOLLET; // Edge-Triggered para eficiencia.
@@ -143,17 +150,15 @@ void Server::acceptNewConnection(int listener_fd, int epoll_fd)
 	}
 }
 
-// websrv/src/Server.cpp
-
 void Server::handleClientRequest(int client_fd, int epoll_fd)
 {
 	Client& client = _clients.at(client_fd);
 	const ServerConfig& config = client.getConfig();
-	char buffer[100000];
+	char buffer[4096];
 	ssize_t bytes_read;
 
 	// --- 1. Leer del socket en un bucle ---
-	// Con EPOLLET, leemos hasta que el buffer del kernel esté vacío.
+	// Con EPOLLET, leemos hasta que el buffer del kernel este vacío.
 
 	while (true)
 	{
@@ -163,7 +168,6 @@ void Server::handleClientRequest(int client_fd, int epoll_fd)
 			client.appendToRequestBuffer(buffer, bytes_read);
 			if (client.getRequestBuffer().length() > static_cast<size_t>(config.client_max_body_size))
 			{
-				std::cout << "Payloada Too Large" << std::endl;
 				Response response;
 				response.buildErrorResponse(413, config); // 413 Payload Too Large
 				client.setResponseBuffer(response.toString());
@@ -178,36 +182,21 @@ void Server::handleClientRequest(int client_fd, int epoll_fd)
 		}
 		else if (bytes_read == 0)
 		{
-			// El cliente cerró la conexión.
+			// El cliente cerro la conexion
 			closeClientConnection(client_fd, epoll_fd);
 			return;
 		}
 		else // bytes_read == -1
 		{
-			// Un -1 en un socket no bloqueante significa "no hay más datos por ahora".
-			// Rompemos el bucle para procesar lo que hemos leído.
+			// Un -1 en un socket no bloqueante significa "no hay mas datos por ahora"
+			// Rompemos el bucle para procesar lo que hemos leido
 			break;
 		}
 	}
-
-	// --- 2. Comprobar si el tamaño excede el límite ---
-	if (client.getRequestBuffer().length() > static_cast<size_t>(config.client_max_body_size))
-	{
-		Response response;
-		response.buildErrorResponse(413, config); // 413 Payload Too Large
-		client.setResponseBuffer(response.toString());
-		client.setState(WRITING);
-
-		struct epoll_event ev;
-		ev.events = EPOLLOUT | EPOLLET;
-		ev.data.fd = client_fd;
-		epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &ev);
-		return;
-	}
-
 	// --- 3. Máquina de estados para el parseo ---
 	if (client.getState() == READING_HEADERS)
 	{
+		// La cabeceras terminan cuando encuentras ("\r\n\r\n")
 		size_t end_of_headers = client.getRequestBuffer().find("\r\n\r\n");
 		if (end_of_headers != std::string::npos)
 		{
@@ -220,14 +209,17 @@ void Server::handleClientRequest(int client_fd, int epoll_fd)
 			std::string cl_value = client.getRequest().getHeaderValue("Content-Length");
 			if (!cl_value.empty())
 			{
+				// Si, la peticion tiene cuerpo y actualizo el estado
 				client.setState(READING_BODY);
 				// No hacemos 'return', continuamos al siguiente 'if' por si el body ya está completo.
 			}
 			else
 			{
+				// No, es una peticion sin cuerpo (como el GET)
 				client.setState(REQUEST_READY);
 			}
 		}
+		// Si no encuentro "\r\n\r\n", no hago nada, simplemente espero a que epoll me avise cuando llegen mas datos
 	}
 
 	if (client.getState() == READING_BODY)
@@ -237,22 +229,28 @@ void Server::handleClientRequest(int client_fd, int epoll_fd)
 		
 		std::string cl_value = client.getRequest().getHeaderValue("Content-Length");
 		char* end = NULL;
-		unsigned long len = std::strtoul(cl_value.c_str(), &end, 10);
+		unsigned long len = std::strtoul(cl_value.c_str(), &end, 10); // Convert string to unsigned long integer
+		// Esto es para extraer el Content-Length
 		
+		// Compruebo si ya he recibido todos los bytes del cuerpo
 		if (client.getRequest().getBody().length() >= len)
 		{
 			// Nos aseguramos de que el body no contenga datos de más.
 			client.getRequest().setBody(client.getRequest().getBody().substr(0, len));
 			client.setState(REQUEST_READY);
 		}
+		// Si no, no hago nada. Espero a recibir mas datos
 	}
 
 	if (client.getState() == REQUEST_READY)
 	{
+		// La peticion esta completa y validada
 		Response response = RequestHandler::handle(client);
 		client.setResponseBuffer(response.toString());
+		// He terminado de leer y actualizo el estado
 		client.setState(WRITING);
 
+		// Le digo a epoll que ahora me interesa escribir
 		struct epoll_event client_event;
 		client_event.events = EPOLLOUT | EPOLLET;
 		client_event.data.fd = client_fd;
@@ -293,7 +291,6 @@ void Server::handleClientResponse(int client_fd, int epoll_fd)
 	// Comprobamos si ya hemos terminado de enviar todo
 	if (client.getBytesSent() == total_size)
 	{
-		std::cout << "Respuesta enviada completamente al cliente " << client_fd << std::endl;
 		closeClientConnection(client_fd, epoll_fd);
 	}
 	// Si no, NO hacemos nada. El servidor esperará el próximo evento EPOLLOUT
@@ -306,6 +303,8 @@ void Server::closeClientConnection(int client_fd, int epoll_fd)
 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
 	close(client_fd);
 	_clients.erase(client_fd);
-	std::cout << "Cliente " << client_fd << " desconectado." << std::endl;
+//	std::stringstream ss;
+//	ss << "Client " << client_fd << " disconnected.";
+//	Logger::log(INFO, ss.str());
 }
 

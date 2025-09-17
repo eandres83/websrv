@@ -3,12 +3,10 @@
 
 Response::Response(): _http_version("HTTP/1.1")
 {
-	std::cout << "Default Response constructor called" << std::endl;
 }
 
 Response::~Response()
 {
-	std::cout << "Response destructor called" << std::endl;
 }
 
 void	Response::setStatusCode(const std::string& code, const std::string& message)

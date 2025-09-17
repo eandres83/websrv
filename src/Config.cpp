@@ -23,7 +23,7 @@ bool Config::parse(const char* filename)
 	LocationConfig redirect_location;
 	redirect_location.path = "/pagina-antigua";
 	redirect_location.return_code = 301;
-	redirect_location.return_url = "/index.html";
+	redirect_location.return_url = "https://www.youtube.com";
 
 	// --- Hardcodeado las locations para probarlo ---
 	LocationConfig root_location;
@@ -41,7 +41,7 @@ bool Config::parse(const char* filename)
 
 	defaultConfig.locations.push_back(root_location);
 	defaultConfig.locations.push_back(uploads_location);
-//	defaultConfig.locations.push_back(redirect_location);
+	defaultConfig.locations.push_back(redirect_location);
 
 	_server_configs.push_back(defaultConfig);
 
