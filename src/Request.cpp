@@ -163,7 +163,7 @@ std::string Request::getHeaderValue(const std::string& header_name) const
 	return ("");
 }
 
-const bool Request::getIsCGI() const
+bool Request::getIsCGI() const
 {
 	return (_isCGI);
 }

@@ -21,8 +21,8 @@ class Request
 		HeaderMap	_headers; // Un mapa para guardar todas las cabeceras
 		std::string _body;
 		bool	_is_parsed;
-		bool	_isCGI;
 		int	_error_code;
+		bool	_isCGI;
 
 		bool	_parseRequestLine(const std::string& line);
 		bool	_parseHeaderLine(const std::string& line);
@@ -41,7 +41,7 @@ class Request
 		const std::string&	getHttpVersion() const;
 		const HeaderMap&	getHeaders() const;
 		const std::string&	getBody() const;
-		const bool			getIsCGI() const;
+		bool			getIsCGI() const;
 
 		bool			isParsed() const;
 		int			getErrorCode() const;
