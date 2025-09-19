@@ -133,7 +133,7 @@ std::string MethodHandler::getMimeType(const std::string& path)
 	mime_types[".gif"] = "image/gif";
 	mime_types[".pdf"] = "application/pdf";
 	mime_types[".php"] = "/usr/bin/php";
-	mime_types[".py"] = "/usr/bin/pythion3";
+	mime_types[".py"] = "/usr/bin/python3";
 	mime_types[".sh"] = "/usr/bin/bash";
 
 	size_t dot_pos = path.rfind('.');
