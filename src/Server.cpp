@@ -135,10 +135,6 @@ void Server::acceptNewConnection(int listener_fd, int epoll_fd)
 	// Creamos el cliente, pasandole su configuracion especifica
 	_clients.insert(std::make_pair(client_socket, Client(client_socket, client_config)));
 
-	std::stringstream ss;
-	ss << "New client connected on port " << client_config.port << " with fd: " << client_socket;
-	Logger::log(INFO, ss.str());
-
 	struct epoll_event client_event;
 	client_event.events = EPOLLIN | EPOLLET; // Edge-Triggered para eficiencia.
 	client_event.data.fd = client_socket;

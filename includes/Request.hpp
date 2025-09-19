@@ -17,6 +17,7 @@ class Request
 		std::string _method; //ej: "GET", "POST", "DELETE"
 		std::string _path; //ej: "/index.html", "/image/logo.jpg"
 		std::string _query_string;
+		std::string _full_path;
 		std::string _http_version; //ej: "HTTP/1.1"
 		HeaderMap	_headers; // Un mapa para guardar todas las cabeceras
 		std::string _body;
@@ -40,12 +41,15 @@ class Request
 		const std::string&	getHttpVersion() const;
 		const HeaderMap&	getHeaders() const;
 		const std::string&	getBody() const;
+		const std::string&	getFullPath() const;
 
-		bool			isParsed() const;
-		int			getErrorCode() const;
+		// seters
+		void		setBody(const std::string& body);
+		void		setFullPath(const std::string& full_path);
+		bool		isParsed() const;
+		int		getErrorCode() const;
 
 		std::string getHeaderValue(const std::string& header_name) const;
-		void		setBody(const std::string& body);
 
 };
 

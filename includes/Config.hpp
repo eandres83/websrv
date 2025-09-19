@@ -18,6 +18,7 @@ struct LocationConfig
 	std::vector<std::string> index_files;
 	int		return_code;
 	std::string	return_url;
+	std::string	root_directory;
 
 	LocationConfig(): autoindex(false), return_code(0) {}
 };

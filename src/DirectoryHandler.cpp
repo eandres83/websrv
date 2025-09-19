@@ -8,6 +8,12 @@ Response DirectoryHandler::handle(Client& client, const LocationConfig* location
 	std::string full_path = config.root_directory + request.getPath();
 	Response response;
 
+	if (full_path[full_path.length() - 1] != '/')
+	{
+		response.buildErrorResponse(301, config);
+		return (response);
+	}
+
 	// 1. Iterar sobre la lista de archivos index definidos en la config
 	for (size_t i = 0; i < location->index_files.size(); ++i)
 	{
@@ -26,7 +32,10 @@ Response DirectoryHandler::handle(Client& client, const LocationConfig* location
 		autoindex_on = location->autoindex;
 
 	if (autoindex_on)
+	{
+		Logger::log(TRACE, "Autoindex on for " + request.getPath() + ". Generating directory listing.");
 		return (_generateAutoindexPage(request.getPath(), full_path));
+	}
 
 	response.buildErrorResponse(403, config); // 403 Forbidden
 	return (response);

@@ -13,19 +13,12 @@ std::string Logger::_getTimestamp()
 void Logger::log(LogLevel level, const std::string& message)
 {
 	std::string levelStr;
-	switch (level)
-	{
-		case INFO:
-			levelStr = "[INFO] ";
-			break;
-		case TRACE:
-			levelStr = "[TRACE] ";
-			break;
-		case FATAL:
-			levelStr = "[FATAL] ";
-			break;
-	}
 
-	std::cout << levelStr << "\t" << _getTimestamp() << " : " << message << std::endl;
+	if (level == INFO)
+		std::cout << GREEN << "[INFO] " << "\t" << _getTimestamp() << " : " << message << RESET << std::endl;
+	else if (level == TRACE)
+		std::cout << MAGENTA << "[TRACE] " << "" << _getTimestamp() << " : " << message << RESET << std::endl;
+	else if	(level == FATAL)
+		std::cout << RED << "[FATAL] " << "" << _getTimestamp() << " : " << message << RESET << std::endl;
 }
 

@@ -5,6 +5,7 @@
 #include "Request.hpp"
 #include "Config.hpp"
 #include "Client.hpp"
+#include "Logger.hpp"
 #include <fstream>
 #include <unistd.h>
 #include <sys/stat.h>

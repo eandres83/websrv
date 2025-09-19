@@ -3,8 +3,6 @@
 // Funcion principal que gestiona todo los metodos
 Response MethodHandler::handle(Client& client)
 {
-//	const std::string& method = client.getRequest().getMethod();
-
 	if (client.getRequest().getMethod() == "GET")
 		return (_handleGet(client));
 	else if (client.getRequest().getMethod() == "POST")
@@ -13,7 +11,7 @@ Response MethodHandler::handle(Client& client)
 		return (_handleDelete(client));
 
 	Response response;
-	response.buildSimpleResponse("501", "Not Implemented");
+	response.buildErrorResponse(501, client.getConfig());
 	return (response);
 }
 
@@ -24,7 +22,7 @@ Response MethodHandler::_handleGet(Client& client)
 	const Request& request = client.getRequest();
 	const ServerConfig& config = client.getConfig();
 
-	std::string full_path = config.root_directory + request.getPath();
+	std::string full_path = request.getFullPath();
 
 	Response response;
 
@@ -48,13 +46,13 @@ Response MethodHandler::_handlePost(Client& client)
 	const Request& request = client.getRequest();
 	const ServerConfig& config = client.getConfig();
 
-	std::string full_path = config.root_directory + request.getPath();
+	std::string full_path = request.getFullPath();
 	Response response;
 
 	// Comprobamos si el recurso ya existe para evitar sobrescribirlo
 	if (access(full_path.c_str(), F_OK) == 0)
 	{
-		response.buildSimpleResponse("409", "Conflict"); // 409 Conflict si el recurso ya existe
+		response.buildErrorResponse(409, config); // 409 Conflict si el recurso ya existe
 		return (response);
 	}
 
@@ -63,7 +61,7 @@ Response MethodHandler::_handlePost(Client& client)
 	if (!new_file.is_open())
 	{
 		// Si no se pudo crear el archivo (ej. por permisos)
-		response.buildSimpleResponse("500", "Internal Server Error");
+		response.buildErrorResponse(500, config);
 		return (response);
 	}
 
@@ -71,7 +69,7 @@ Response MethodHandler::_handlePost(Client& client)
 	new_file << request.getBody();
 	new_file.close();
 
-	response.buildSimpleResponse("201", "Created");
+	response.buildErrorResponse(201, config);
 	return (response);
 }
 
@@ -80,22 +78,22 @@ Response MethodHandler::_handleDelete(Client& client)
 	const Request& request = client.getRequest();
 	const ServerConfig& config = client.getConfig();
 
-	std::string full_path = config.root_directory + request.getPath();
+	std::string full_path = request.getFullPath();
 	Response response;
 
 	if (access(full_path.c_str(), F_OK) == -1)
 	{
 		// Si el archivo no existe, no se puede borrar. Devolvemos 404
-		response.buildSimpleResponse("404", "Not Found");
+		response.buildErrorResponse(404, config);
 	}
 	else if (remove(full_path.c_str()) == 0) // Intentamos borrarlo
 	{
-		response.setStatusCode("204", "No Content");
+		response.buildErrorResponse(204, config);
 	}
 	else
 	{
 		// Si `remove` falla por otra razón (ej. permisos)
-		response.buildSimpleResponse("500", "Internal Server Error");
+		response.buildErrorResponse(500, config);
 	}
 	return (response);
 }

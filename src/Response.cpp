@@ -1,5 +1,6 @@
 #include "../includes/Response.hpp"
 #include "../includes/Server.hpp"
+#include "../includes/Logger.hpp"
 
 Response::Response(): _http_version("HTTP/1.1")
 {
@@ -69,6 +70,16 @@ void Response::buildCustomResponse(const std::string& code, const std::string& m
 	setBody(body);
 }
 
+void Response::buildRedirectResponse(int code, const std::string& location_url)
+{
+	std::string message = "Moved Permanently";
+	std::stringstream ss;
+	ss << code;
+	setStatusCode(ss.str(), message);
+	addHeader("Location", location_url);
+	setBody("<html><body><h1>" + ss.str() + " " + message + "</h1></body></html>");
+}
+
 // Función auxiliar para leer archivos (puedes mover la que tienes en MethodHandler aquí)
 static std::string readFile(const std::string& path)
 {
@@ -84,10 +95,14 @@ static std::string readFile(const std::string& path)
 static std::map<int, std::string> getStatusMessages()
 {
 	std::map<int, std::string> messages;
+	messages[201] = "Created";
+	messages[204] = "No Content";
+	messages[301] = "Moved Permanently";
 	messages[400] = "Bad Request";
 	messages[403] = "Forbidden";
 	messages[404] = "Not Found";
 	messages[405] = "Method Not Allowed";
+	messages[409] = "Cnflict";
 	messages[413] = "Payload Too Large";
 
 	messages[500] = "Internal Server Error";
@@ -100,7 +115,13 @@ static std::map<int, std::string> getStatusMessages()
 void Response::buildErrorResponse(int error_code, const ServerConfig& config)
 {
 	std::map<int, std::string> status_messages = getStatusMessages();
-	std::string message = status_messages.count(error_code) ? status_messages[error_code] : "Error";
+	std::string message;
+
+	std::map<int, std::string>::const_iterator it = status_messages.find(error_code);
+	if (it != status_messages.end())
+		message = it->second;
+	else
+		message = "Error";
 
 	std::string body;
 	// 1. Comprobar si hay una pagina personalizada en la config

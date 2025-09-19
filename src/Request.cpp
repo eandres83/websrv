@@ -111,7 +111,17 @@ void	Request::setBody(const std::string& body)
 	_body = body;
 }
 
+void	Request::setFullPath(const std::string& path)
+{
+	_full_path = path;
+}
+
 // --- Geters ---
+
+const std::string& Request::getFullPath() const
+{
+	return (_full_path);
+}
 
 const std::string& Request::getMethod() const
 {
