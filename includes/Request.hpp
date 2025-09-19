@@ -23,6 +23,7 @@ class Request
 		std::string _body;
 		bool	_is_parsed;
 		int	_error_code;
+		bool	_isCGI;
 
 		bool	_parseRequestLine(const std::string& line);
 		bool	_parseHeaderLine(const std::string& line);
@@ -42,6 +43,7 @@ class Request
 		const HeaderMap&	getHeaders() const;
 		const std::string&	getBody() const;
 		const std::string&	getFullPath() const;
+		bool			getIsCGI() const;
 
 		// seters
 		void		setBody(const std::string& body);

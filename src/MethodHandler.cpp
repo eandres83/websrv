@@ -1,4 +1,4 @@
-#include "../includes/MethodHandler.hpp"
+#include "../includes/CGI.hpp"
 
 // Funcion principal que gestiona todo los metodos
 Response MethodHandler::handle(Client& client)
@@ -15,7 +15,7 @@ Response MethodHandler::handle(Client& client)
 	return (response);
 }
 
-// --- Implementacion de los metodos --- 
+// --- Implementacion de los metodos ---
 
 Response MethodHandler::_handleGet(Client& client)
 {
@@ -32,8 +32,16 @@ Response MethodHandler::_handleGet(Client& client)
 	}
 	else // Si el archivo existe
 	{
-		response.buildCustomResponse("200", "OK", _readFile(full_path));
-		response.addHeader("Content-Type", _getMimeType(full_path));
+		if (request.getIsCGI())
+		{
+			// LOGICA DEL CGI
+			manageCGI(client, response);
+		}
+		else
+		{
+			response.buildCustomResponse("200", "OK", _readFile(full_path));
+			response.addHeader("Content-Type", getMimeType(full_path));
+		}
 	}
 	return (response);
 }
@@ -111,7 +119,7 @@ std::string MethodHandler::_readFile(const std::string& path)
 }
 
 // Funcion importante para saber que Content-Type es
-std::string MethodHandler::_getMimeType(const std::string& path)
+std::string MethodHandler::getMimeType(const std::string& path)
 {
 	std::map<std::string, std::string> mime_types;
 	mime_types[".html"] = "text/html";
@@ -122,6 +130,9 @@ std::string MethodHandler::_getMimeType(const std::string& path)
 	mime_types[".png"] = "image/png";
 	mime_types[".gif"] = "image/gif";
 	mime_types[".pdf"] = "application/pdf";
+	mime_types[".php"] = "/usr/bin/php";
+	mime_types[".py"] = "/usr/bin/pythion3";
+	mime_types[".sh"] = "/usr/bin/bash";
 
 	size_t dot_pos = path.rfind('.');
 	if (dot_pos != std::string::npos)

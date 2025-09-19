@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 		Logger::log(FATAL, "Error " + std::string(e.what()));
 		return (1);
 	}
+	
 
 	return (0);
 }
-

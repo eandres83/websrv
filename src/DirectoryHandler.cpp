@@ -90,4 +90,3 @@ std::string DirectoryHandler::_readFile(const std::string& path)
 	buffer << file.rdbuf();
 	return (buffer.str());
 }
-

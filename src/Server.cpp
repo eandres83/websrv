@@ -63,7 +63,7 @@ void Server::run()
 	if (epoll_fd == -1)
 		throw std::runtime_error("Error fatal: epoll_create");
 
-	const int MAX_EVENTS = 64;
+	const int MAX_EVENTS = 2064;
 	struct epoll_event events[MAX_EVENTS];
 
 	// Registra los sockets de escucha iniciales en la instancia de epoll
@@ -176,7 +176,8 @@ void Server::handleClientRequest(int client_fd, int epoll_fd)
 				return;
 			}
 		}
-		else if (bytes_read == 0)
+		else if (bytes_read == 0)	// Comprobamos si ya hemos terminado de enviar todo
+
 		{
 			// El cliente cerro la conexion
 			closeClientConnection(client_fd, epoll_fd);

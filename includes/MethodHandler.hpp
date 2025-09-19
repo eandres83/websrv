@@ -16,9 +16,9 @@ class MethodHandler
 		static Response _handleDelete(Client& client);
 
 		static std::string  _readFile(const std::string& path);
-		static std::string  _getMimeType(const std::string& path);
-
+		
 	public:
+		static std::string  getMimeType(const std::string& path);
 		// metodo publico que gestiona todo
 		static Response handle(Client& client);
 };
