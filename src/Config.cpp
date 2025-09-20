@@ -45,29 +45,41 @@ bool Config::parse(const char* filename)
 	uploads_location.allowed_methods.push_back("POST");
 	uploads_location.index_files.push_back("index.html");
 	uploads_location.index_files.push_back("index2.html");
-
-	// Tester
-	LocationConfig test;
-	test.path = "/directory/";
-	test.root_directory = "./YoupiBanane";
-	test.allowed_methods.push_back("GET");
-	test.index_files.push_back("youpi.bad_extension");
-	test.autoindex = true;
-
-	LocationConfig test_location;
-	test_location.path = "/static";
-	test_location.root_directory = "./www_static";
-	test_location.allowed_methods.push_back("GET");
-	test_location.autoindex = true;
+	uploads_location.upload_path = "./www/uploads";
 
 	defaultConfig.locations.push_back(root_location);
 	defaultConfig.locations.push_back(uploads_location);
 	defaultConfig.locations.push_back(redirect_location);
-	defaultConfig.locations.push_back(test_location);
-//	defaultConfig.locations.push_back(test);
 
 	_server_configs.push_back(defaultConfig);
 
+	// NUEVO SERVIDOR
+	ServerConfig server2_config;
+	server2_config.port = 8081;
+	server2_config.root_directory = "./www_server2";
+	server2_config.error_pages[404] = "./www/404.html";
+	server2_config.enable_reuse_addr = 1;
+	server2_config.client_max_body_size = 1048576;
+
+	LocationConfig server2_root;
+	server2_root.path = "/";
+	server2_root.root_directory = "./www_server2";
+	server2_root.allowed_methods.push_back("GET");
+	server2_root.allowed_methods.push_back("POST");
+	server2_root.autoindex = true;
+	server2_root.index_files.push_back("index.html");
+
+	LocationConfig server2_uploads;
+	server2_uploads.path = "/uploads";
+	server2_uploads.root_directory = "/www_server2";
+	server2_uploads.allowed_methods.push_back("POST");
+	server2_uploads.allowed_methods.push_back("GET");
+	server2_uploads.upload_path = "./www_server2/uploads";
+
+	server2_config.locations.push_back(server2_root);
+	server2_config.locations.push_back(server2_uploads);
+	
+//	_server_configs.push_back(server2_config);
 	return (true);
 }
 

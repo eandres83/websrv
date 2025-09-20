@@ -31,7 +31,9 @@ Response RequestHandler::handle(Client& client)
 	const ServerConfig& config = client.getConfig();
 	Response response;
 
-	Logger::log(TRACE, request.getMethod() + " " + request.getPath() + " " + request.getHttpVersion());
+	std::stringstream ss_log;
+	ss_log << "Request from 0.0.0.0:" << config.port << " - " << request.getMethod() << " " << request.getPath();
+	Logger::log(TRACE, ss_log.str());
 
 	// 1. Encontrar la location que corresponse
 	const LocationConfig* location = _findLocationForPath(request.getPath(), config);
@@ -75,9 +77,9 @@ Response RequestHandler::handle(Client& client)
 		// Ej. location /img/ con request /img/logo.png -> la uri a servir es /logo.png
 		if (request_uri.rfind(location->path, 0) == 0)
 			request_uri = request_uri.substr(location->path.length());
-		else
-			root_dir = config.root_directory;
 	}
+	else
+		root_dir = config.root_directory;
 
 	// Unimos el root y la uri de forma segura para evitar "//"
 	std::string full_path = root_dir;
@@ -91,15 +93,13 @@ Response RequestHandler::handle(Client& client)
 
 	full_path += request_uri;
 
-	std::cout << full_path << std::endl;
-
 	request.setFullPath(full_path);
 
 	// 5. Si es un directorio y tengo permisos en la config, gestiono autoindex
 	if (_isDirectory(full_path) && request.getMethod() == "GET")
 		return (DirectoryHandler::handle(client, location));
 	else
-		return (MethodHandler::handle(client));
+		return (MethodHandler::handle(client, location));
 }
 
 bool	RequestHandler::_isDirectory(const std::string& path)

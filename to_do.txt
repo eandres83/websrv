@@ -3,5 +3,3 @@ Parse configuration file
 
 //
 
-Siege, stress tests
-Gestionar tipos de archivos en el POST
