@@ -19,6 +19,7 @@ struct LocationConfig
 	int		return_code;
 	std::string	return_url;
 	std::string	root_directory;
+	std::string	upload_path;
 
 	LocationConfig(): autoindex(false), return_code(0) {}
 };

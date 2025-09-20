@@ -102,7 +102,7 @@ static std::map<int, std::string> getStatusMessages()
 	messages[403] = "Forbidden";
 	messages[404] = "Not Found";
 	messages[405] = "Method Not Allowed";
-	messages[409] = "Cnflict";
+	messages[409] = "Conflict";
 	messages[413] = "Payload Too Large";
 
 	messages[500] = "Internal Server Error";
