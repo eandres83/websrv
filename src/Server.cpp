@@ -364,8 +364,7 @@ void Server::handleCGIEvent(Client& client, int cgi_fd, int epoll_fd)
 			epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client.getSocketFd(), &ev);
 			return;
 		}
-		// n < 0
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
+		if (n < 0)
 			break; // no hay más por ahora
 		// error: cerrar CGI y devolver 500
 		Response response;

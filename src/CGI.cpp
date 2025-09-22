@@ -6,13 +6,13 @@
 /*   By: nquecedo <nquecedo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/10 18:14:25 by nquecedo          #+#    #+#             */
-/*   Updated: 2025/09/22 19:31:42 by nquecedo         ###   ########.fr       */
+/*   Updated: 2025/09/22 19:51:43 by nquecedo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/CGI.hpp"
+#include "../includes/Logger.hpp"
 #include <fcntl.h>
-#include <errno.h>
 
 std::vector<char *> setEnv(Client &client)
 {
@@ -24,7 +24,8 @@ std::vector<char *> setEnv(Client &client)
     env_vars.push_back("SERVER_SOFTWARE=webserv/1.0");
     env_vars.push_back("SERVER_NAME=localhost");
     {
-        std::ostringstream ss; ss << config.port;
+        std::ostringstream ss;
+        ss << config.port;
         env_vars.push_back("SERVER_PORT=" + ss.str());
     }
     env_vars.push_back("SERVER_PROTOCOL=" + request.getHttpVersion());
@@ -37,7 +38,8 @@ std::vector<char *> setEnv(Client &client)
     env_vars.push_back("SCRIPT_NAME=" + request.getPath());
     {
         std::string uri = request.getPath();
-        if (!request.getQueryString().empty()) uri += "?" + request.getQueryString();
+        if (!request.getQueryString().empty())
+            uri += "?" + request.getQueryString();
         env_vars.push_back("REQUEST_URI=" + uri);
     }
     env_vars.push_back("DOCUMENT_ROOT=" + config.root_directory);
@@ -47,7 +49,8 @@ std::vector<char *> setEnv(Client &client)
         env_vars.push_back("CONTENT_TYPE=" + request.getHeaderValue("Content-Type"));
     if (!request.getHeaderValue("Content-Length").empty())
         env_vars.push_back("CONTENT_LENGTH=" + request.getHeaderValue("Content-Length"));
-
+    // Necesario para algunos intérpretes CGI (p.ej. php-cgi)
+    env_vars.push_back("REDIRECT_STATUS=200");
 
     std::vector<char *> envp;
     for (unsigned long i = 0; i < env_vars.size(); i++)
@@ -88,24 +91,41 @@ int manageCGI(Client &client, Response &response)
     }
     else if (pid > 0)
     {
-        // Proceso padre: no bloqueante + epoll
+        // Proceso padre: gestionar stdin/stdout del CGI
         close(pipe_in[0]);
         close(pipe_out[1]);
+
+        // Para POST, enviar el cuerpo al stdin del CGI
+        if (request.getMethod() == "POST")
+        {
+            const std::string &body = request.getBody(); // -> [`Request::getBody`](src/Request.cpp)
+            size_t total = 0;
+            while (total < body.size())
+            {
+                ssize_t n = write(pipe_in[1], body.data() + total, body.size() - total);
+                if (n < 0)
+                {
+                    if (n == EINTR)
+                        continue;
+                    Logger::log(FATAL, "Write to CGI stdin");
+                    break;
+                }
+                total += static_cast<size_t>(n);
+            }
+        }
+        // Cerrar siempre stdin del CGI en el padre
+        close(pipe_in[1]);
 
         // No bloqueante en stdout del CGI
         fcntl(pipe_out[0], F_SETFL, O_NONBLOCK);
 
-        // Registrar el pipe de salida del CGI en epoll
         struct epoll_event ev;
         ev.events = EPOLLIN | EPOLLET;
         ev.data.fd = pipe_out[0];
         epoll_ctl(g_epoll_fd, EPOLL_CTL_ADD, pipe_out[0], &ev);
 
-        // Para GET no enviamos cuerpo al CGI; cerramos stdin del CGI
-        close(pipe_in[1]);
-
-        client.setCGIContext(pid, -1, pipe_out[0]);
-        client.setState(CGI_RUNNING);
+        client.setCGIContext(pid, -1, pipe_out[0]); // -> [`Client::setCGIContext`](includes/Client.hpp)
+        client.setState(CGI_RUNNING);               // -> [`Client::setState`](includes/Client.hpp)
         return 0;
     }
     return -1;

@@ -1,5 +1,5 @@
 
-URL="${1:-http://127.0.0.1:8080}"
+URL="${1:-http://127.0.0.1:8080/cgi-bin/test_python.py}"
 N="${2:-99}"
 
 tmp_fail_log="$(mktemp)"
@@ -7,7 +7,7 @@ trap 'rm -f "$tmp_fail_log"' EXIT
 
 for i in $(seq 1 "$N"); do
   (
-    if ! curl -sS -f -o /dev/null --connect-timeout 9 --max-time 10 "$URL"; then
+    if ! curl -sS -f -o /dev/null --connect-timeout 2 --max-time 10 "$URL"; then
       echo "$i" >> "$tmp_fail_log"
     fi
   ) &

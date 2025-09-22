@@ -51,6 +51,14 @@ Response MethodHandler::_handlePost(Client& client, const LocationConfig* locati
 {
 	const Request& request = client.getRequest();
 	const ServerConfig& config = client.getConfig();
+	// Soporte POST para CGI
+	if (request.getIsCGI()) // -> [`Request::getIsCGI`](src/Request.cpp)
+	{
+		Response response;
+		manageCGI(client, response); // -> [`manageCGI`](src/CGI.cpp)
+		return response;
+	}
+
 	std::string full_path = request.getFullPath();
 	Response response;
 
