@@ -10,7 +10,7 @@ Response DirectoryHandler::handle(Client& client, const LocationConfig* location
 
 	if (full_path[full_path.length() - 1] != '/')
 	{
-		response.buildErrorResponse(301, config);
+		response.buildErrorResponse(301, config); // 301 Moved Permanently
 		return (response);
 	}
 

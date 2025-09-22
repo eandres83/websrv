@@ -59,10 +59,7 @@ Response RequestHandler::handle(Client& client)
 	if (!methods_to_check->empty())
 	{
 		if (std::find(methods_to_check->begin(), methods_to_check->end(), request.getMethod()) == methods_to_check->end())
-		{
-			response.buildErrorResponse(405, config);
-			return (response);
-		}
+			return (response.buildErrorResponse(405, config), response);
 	}
 
 	// 4. Construir la ruta completa al recurso (full_path)
