@@ -1,5 +1,7 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
+extern int g_epoll_fd;
+
 
 #include <unistd.h>
 #include <iostream>
@@ -35,6 +37,7 @@ class Server
 		void handleClientRequest(int client_fd, int epoll_fd);
 		void handleClientResponse(int client_fd, int epoll_fd);
 		void closeClientConnection(int client_fd, int epoll_fd);
+		void handleCGIEvent(Client& client, int cgi_fd, int epoll_fd);
 
 	public:
 		Server(const Config& config);

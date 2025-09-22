@@ -1,6 +1,7 @@
 #include "../includes/Client.hpp"
 
 Client::Client(int fd, const ServerConfig& config) : _socket_fd(fd), _bytes_sent(0), _state(READING_HEADERS), _config(config)
+, _cgi_stdout_fd(-1), _cgi_stdin_fd(-1), _cgi_pid(-1)
 {
 }
 
@@ -67,3 +68,22 @@ void	Client::incrementBytesSent(size_t bytes)
 	_bytes_sent += bytes;
 }
 
+void Client::setCGIContext(pid_t pid, int stdin_fd, int stdout_fd)
+{
+    _cgi_pid = pid;
+    _cgi_stdin_fd = stdin_fd;
+    _cgi_stdout_fd = stdout_fd;
+}
+
+int Client::getCGIStdoutFd() const { return _cgi_stdout_fd; }
+int Client::getCGIStdinFd() const { return _cgi_stdin_fd; }
+pid_t Client::getCGIPid() const { return _cgi_pid; }
+std::string& Client::getCGIBuffer() { return _cgi_buffer; }
+
+void Client::clearCGIContext()
+{
+    _cgi_pid = -1;
+    _cgi_stdin_fd = -1;
+    _cgi_stdout_fd = -1;
+    _cgi_buffer.clear();
+}

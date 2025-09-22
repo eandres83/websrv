@@ -2,6 +2,10 @@
 #include "../includes/Request.hpp"
 #include "../includes/RequestHandler.hpp"
 #include "../includes/Logger.hpp"
+#include <errno.h>
+#include <sys/wait.h>
+
+int g_epoll_fd;
 
 Server::Server(const Config& config): _config(config)
 {
@@ -63,6 +67,7 @@ void Server::run()
 	if (epoll_fd == -1)
 		throw std::runtime_error("Error fatal: epoll_create");
 
+	g_epoll_fd = epoll_fd;
 	const int MAX_EVENTS = 2064;
 	struct epoll_event events[MAX_EVENTS];
 
@@ -98,20 +103,37 @@ void Server::run()
 			}
 			// Distingue entre una nueva conexion y datos de un cliente existente
 			if (is_listener)
-				acceptNewConnection(current_fd, epoll_fd);
-			else
 			{
-				std::map<int, Client>::iterator it = _clients.find(current_fd);
-				if (it == _clients.end())
-					continue; // Cliente no encontrado, seguimos
-				Client& client = it->second;
-
-				// La logica ahora depende directamente del estado del cliente
-				if (client.getState() == WRITING && (events[i].events & EPOLLOUT))
-					handleClientResponse(current_fd, epoll_fd);
-				else if ((events[i].events & EPOLLIN) && (client.getState() == READING_HEADERS || client.getState() == READING_BODY))
-					handleClientRequest(current_fd, epoll_fd);
+				acceptNewConnection(current_fd, epoll_fd);
+				continue;
 			}
+
+			// ¿Es un socket de cliente?
+			std::map<int, Client>::iterator it = _clients.find(current_fd);
+			if (it == _clients.end())
+			{
+				// Si no, ¿es un fd de salida de CGI de algún cliente?
+				bool handled = false;
+				for (std::map<int, Client>::iterator cit = _clients.begin(); cit != _clients.end(); ++cit)
+				{
+					if (cit->second.getCGIStdoutFd() == current_fd)
+					{
+						handleCGIEvent(cit->second, current_fd, epoll_fd);
+						handled = true;
+						break;
+					}
+				}
+				if (!handled) continue;
+				else continue;
+			}
+
+			Client& client = it->second;
+
+			if (client.getState() == WRITING && (events[i].events & EPOLLOUT))
+				handleClientResponse(current_fd, epoll_fd);
+			else if ((events[i].events & EPOLLIN) && (client.getState() == READING_HEADERS || client.getState() == READING_BODY))
+				handleClientRequest(current_fd, epoll_fd);
+			// Si está en CGI_RUNNING, no hacemos nada aquí; lo gestionará handleCGIEvent cuando llegue EPOLLIN al pipe.
 		}
 	}
 }
@@ -243,6 +265,11 @@ void Server::handleClientRequest(int client_fd, int epoll_fd)
 	{
 		// La peticion esta completa y validada
 		Response response = RequestHandler::handle(client);
+
+		// Si el handler ha iniciado un CGI asíncrono, no montar respuesta aún.
+		if (client.getState() == CGI_RUNNING)
+			return;
+
 		client.setResponseBuffer(response.toString());
 		// He terminado de leer y actualizo el estado
 		client.setState(WRITING);
@@ -303,5 +330,60 @@ void Server::closeClientConnection(int client_fd, int epoll_fd)
 //	std::stringstream ss;
 //	ss << "Client " << client_fd << " disconnected.";
 //	Logger::log(INFO, ss.str());
+}
+
+void Server::handleCGIEvent(Client& client, int cgi_fd, int epoll_fd)
+{
+	char buffer[4096];
+	while (true)
+	{
+		ssize_t n = read(cgi_fd, buffer, sizeof(buffer));
+		if (n > 0)
+		{
+			client.getCGIBuffer().append(buffer, n);
+			continue; // seguir drenando en Edge-Triggered
+		}
+		if (n == 0)
+		{
+			// EOF: construir respuesta y pasar a WRITING
+			Response response;
+			response.buildCustomResponse("200", "OK", client.getCGIBuffer());
+			response.addHeader("Content-Type", "text/html");
+			client.setResponseBuffer(response.toString());
+			client.setState(WRITING);
+
+			epoll_ctl(epoll_fd, EPOLL_CTL_DEL, cgi_fd, NULL);
+			close(cgi_fd);
+			if (client.getCGIPid() > 0)
+				waitpid(client.getCGIPid(), NULL, WNOHANG);
+			client.clearCGIContext();
+
+			struct epoll_event ev;
+			ev.events = EPOLLOUT | EPOLLET;
+			ev.data.fd = client.getSocketFd();
+			epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client.getSocketFd(), &ev);
+			return;
+		}
+		// n < 0
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			break; // no hay más por ahora
+		// error: cerrar CGI y devolver 500
+		Response response;
+		response.buildErrorResponse(500, client.getConfig());
+		client.setResponseBuffer(response.toString());
+		client.setState(WRITING);
+
+		epoll_ctl(epoll_fd, EPOLL_CTL_DEL, cgi_fd, NULL);
+		close(cgi_fd);
+		if (client.getCGIPid() > 0)
+			waitpid(client.getCGIPid(), NULL, WNOHANG);
+		client.clearCGIContext();
+
+		struct epoll_event ev;
+		ev.events = EPOLLOUT | EPOLLET;
+		ev.data.fd = client.getSocketFd();
+		epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client.getSocketFd(), &ev);
+		return;
+	}
 }
 

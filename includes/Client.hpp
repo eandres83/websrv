@@ -12,8 +12,10 @@ enum ClientState
 	READING_HEADERS,
 	READING_BODY,
 	REQUEST_READY,
-	WRITING  // El servidor esta escribiendo datos al cliente
+	WRITING,  // El servidor esta escribiendo datos al cliente
+	CGI_RUNNING
 };
+
 
 class Client
 {
@@ -25,6 +27,12 @@ class Client
 		ClientState	_state;	
 		Request		_request;
 		const ServerConfig& _config;
+
+		// --- Contexto CGI ---
+		int       _cgi_stdout_fd;
+		int       _cgi_stdin_fd;
+		pid_t     _cgi_pid;
+		std::string _cgi_buffer;
 
 	public:
 		Client(int fd, const ServerConfig& config);
@@ -45,6 +53,13 @@ class Client
 		void		setResponseBuffer(const std::string& response);
 		void		incrementBytesSent(size_t bytes);
 
+        // --- CGI helpers ---
+        void setCGIContext(pid_t pid, int stdin_fd, int stdout_fd);
+        int  getCGIStdoutFd() const;
+        int  getCGIStdinFd() const;
+        pid_t getCGIPid() const;
+        std::string& getCGIBuffer();
+        void clearCGIContext();
 };
 
 #endif // CLIENT_HPP

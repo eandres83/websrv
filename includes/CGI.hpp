@@ -1,3 +1,4 @@
+#include "Server.hpp"
 #include "Colors.hpp"
 #include "Client.hpp"
 #include "Response.hpp"
@@ -7,6 +8,15 @@
 #include <unistd.h>
 #include <sstream>
 #include <cstring>
+#include <map>
+#include <algorithm>
+#include <sys/epoll.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <fcntl.h>
+#include "Client.hpp"
+#include "Config.hpp"
+#include "Response.hpp"
 
 #ifndef CGI_HPP
 #define CGI_HPP

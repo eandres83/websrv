@@ -7,17 +7,17 @@ RM = rm -rf
 SRC_DIR = ./src/
 OBJ_DIR = ./objects/
 
-SRC = src/Request.cpp \
-	src/CGI.cpp \
+SRC = src/Server.cpp \
+	src/Request.cpp \
 	src/Config.cpp \
 	src/DirectoryHandler.cpp \
 	src/main.cpp \
 	src/Client.cpp \
 	src/MethodHandler.cpp \
-	src/Server.cpp \
 	src/RequestHandler.cpp \
 	src/Response.cpp \
 	src/Logger.cpp \
+	src/CGI.cpp \
 
 OBJS = $(SRC:$(SRC_DIR)%.cpp=$(OBJ_DIR)%.o)
 

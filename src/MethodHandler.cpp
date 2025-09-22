@@ -34,8 +34,9 @@ Response MethodHandler::_handleGet(Client& client)
 	{
 		if (request.getIsCGI())
 		{
-			// LOGICA DEL CGI
+			 // Iniciar CGI de forma asíncrona; la respuesta se completará en Server::handleCGIEvent
 			manageCGI(client, response);
+			return response; // vacío; no pasar a WRITING
 		}
 		else
 		{
