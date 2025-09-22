@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   CGI.cpp                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: nquecedo <nquecedo@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/10 18:14:25 by nquecedo          #+#    #+#             */
+/*   Updated: 2025/09/22 17:48:20 by nquecedo         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../includes/CGI.hpp"
 
 std::vector<char *> setEnv(Client &client)
@@ -6,16 +18,27 @@ std::vector<char *> setEnv(Client &client)
     const ServerConfig &config = client.getConfig();
 
     std::vector<std::string> env_vars;
-
+    env_vars.push_back("GATEWAY_INTERFACE=CGI/1.1");
+    env_vars.push_back("SERVER_SOFTWARE=webserv/1.0");
+    env_vars.push_back("SERVER_NAME=localhost");
+    {
+        std::ostringstream ss; ss << config.port;
+        env_vars.push_back("SERVER_PORT=" + ss.str());
+    }
+    env_vars.push_back("SERVER_PROTOCOL=" + request.getHttpVersion());
     env_vars.push_back("REQUEST_METHOD=" + request.getMethod());
     env_vars.push_back("QUERY_STRING=" + request.getQueryString());
-    env_vars.push_back("SERVER_PROTOCOL=" + request.getHttpVersion());
-    env_vars.push_back("PATH_INFO=" + request.getPath());
-    env_vars.push_back("SCRIPT_FILENAME=" + config.root_directory + request.getPath());
-    env_vars.push_back("SERVER_NAME=localhost");
-    std::ostringstream port_ss;
-    port_ss << config.port;
-    env_vars.push_back("SERVER_PORT=" + port_ss.str()); // AÑADIR LOGICA DE POST         TODO
+    env_vars.push_back("PATH=/home/nquecedo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/nquecedo/.vscode/extensions/ms-python.debugpy-2025.10.0-linux-x64/bundled/scripts/noConfigScripts:/home/nquecedo/.config/Code/User/globalStorage/github.copilot-chat/debugCommand");
+
+    // Rutas
+    env_vars.push_back("SCRIPT_FILENAME=" + (config.root_directory + request.getPath()));
+    env_vars.push_back("SCRIPT_NAME=" + request.getPath());
+    {
+        std::string uri = request.getPath();
+        if (!request.getQueryString().empty()) uri += "?" + request.getQueryString();
+        env_vars.push_back("REQUEST_URI=" + uri);
+    }
+    env_vars.push_back("DOCUMENT_ROOT=" + config.root_directory);
 
     std::vector<char *> envp;
     for (unsigned long i = 0; i < env_vars.size(); i++)
@@ -34,6 +57,7 @@ int manageCGI(Client &client, Response &response)
     std::string execPath = MethodHandler::getMimeType(full_path); // esto mover a cuadno necesite la direccion de cada lenguaje
 
     std::cout << YELLOW << "[INFO] Cgi management execPath: " << execPath << RESET << std::endl;
+    // std::cout << GREEN << "" << request.getQueryString() << RESET << std::endl;
 
     //  1. Crear los pipes
     int pipe_in[2];
@@ -69,6 +93,7 @@ int manageCGI(Client &client, Response &response)
         close(pipe_out[1]);
 
         // AÑADIR LOGICA DE POST     TODO
+        waitpid(pid, NULL, 0);
 
         while ((bytes_read = read(pipe_out[0], buffer, sizeof(buffer))) > 0)
             cgi_output.append(buffer, bytes_read);
@@ -78,10 +103,11 @@ int manageCGI(Client &client, Response &response)
             perror("read");
         }
 
-        waitpid(pid, NULL, 0);
         close(pipe_in[1]);
         close(pipe_out[0]);
     }
+
+    std::cout << GREEN << "AAAAAAA" << cgi_output << RESET <<std::endl;
 
     response.buildCustomResponse("200", "OK", cgi_output);
     response.addHeader("Content-Type", "text/html");
