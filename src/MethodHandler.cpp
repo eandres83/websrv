@@ -296,16 +296,11 @@ static std::string getRequiredField(const std::map<std::string,std::string>& m, 
 Response MethodHandler::_handleUserSingup(Client &client, Response &response)
 {
 	const Request &request = client.getRequest();
-	(void)request;
-	(void)response;
-	Logger::log(INFO, "ESTAMOS EN EL GETSOR DE SINGUP");
-
 	std::map<std::string, std::string> claveValor = parseFormURLEncoded(request.getBody());
     const std::map<unsigned int, User>& users = client.getServer().getRegisteredUsersRef();
 
-
 	for (std::map<std::string, std::string>::const_iterator it = claveValor.begin();
-		 it != claveValor.end(); ++it)
+		it != claveValor.end(); ++it)
 	{
 		std::stringstream ss;
 		ss << "[SIGNUP] " << it->first << " = " << it->second;
@@ -316,10 +311,9 @@ Response MethodHandler::_handleUserSingup(Client &client, Response &response)
     std::string email    = getRequiredField(claveValor, "email");
     std::string password = getRequiredField(claveValor, "password");
 
-
 	// Buscar duplicado
 	for (std::map<unsigned int, User>::const_iterator it = users.begin();
-		 it != users.end(); ++it)
+		it != users.end(); ++it)
 	{
 		Logger::log(TRACE, "USER: " + username);
 
@@ -329,8 +323,23 @@ Response MethodHandler::_handleUserSingup(Client &client, Response &response)
 			response.buildErrorResponse(409, client.getConfig());
 			return response; // salir temprano
 		}
-		
 	}
 	client.getServer().addUser(username, password, email);
+	    // Respuesta de éxito: 
+
+
+
+	//TODO: MEJORAR LA RESPUESTA EXITOSA
+
+		std::stringstream body;
+		body << "{\n"
+			 << "  \"status\": \"created\",\n"
+			 << "  \"username\": \"" << username << "\"\n"
+			 << "}\n";
+	
+		response.buildCustomResponse("201", "Created", body.str());
+		response.addHeader("Content-Type", "application/json");
+		// response.addHeader("Location", "/users/user-test.html"); // opcional (pista de nuevo recurso)
+		// response.addHeader("Set-Cookie", "session=abc123; Path=/; HttpOnly");
 	return (response);
 }

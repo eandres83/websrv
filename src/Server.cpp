@@ -419,3 +419,4 @@ const User* Server::findUserByName(const std::string& name) const {
     return NULL;
 }
 
+
