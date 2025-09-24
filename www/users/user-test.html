@@ -171,7 +171,7 @@
             <div class="field">
                 <label for="password">Contraseña</label>
                 <input id="password" name="password" type="password" autocomplete="current-password" required
-                    minlength="6" />
+                    minlength="3" />
             </div>
 
             <div class="row">
@@ -190,6 +190,17 @@
 
     <script>
         (function () {
+
+            // Redirigir automáticamente si ya hay sesión (cookies presentes)
+            function hasCookie(name) {
+                return document.cookie.split(';').some(c => c.trim().indexOf(name + '=') === 0);
+            }
+            // Verificamos solo username (session_id es HttpOnly y no se puede leer)
+            if (hasCookie('username')) {
+                window.location.replace('/users/loged-user.html');
+                return;
+            }
+
             const form = document.getElementById('login-form');
             const btn = document.getElementById('login-btn');
             const statusEl = document.getElementById('status');

@@ -34,7 +34,7 @@ class User {
         ~User();
 
         //Geters
-        unsigned int getId();
+        unsigned int getId() const;
         unsigned int getTimesConected();
         std::string getName() const;
         std::string getPasword();

@@ -116,7 +116,7 @@
       </h1>
       <div class="actions">
         <a class="link" href="/">Inicio</a>
-        <a class="link" href="/users/user-test.html">Cambiar de usuario</a>
+        <a class="link" id="change-user-link" href="/users/user-test.html">Cambiar de usuario</a>
         <button id="logout-btn" class="danger" type="button">Cerrar sesión</button>
       </div>
     </div>
@@ -147,75 +147,85 @@
 
   <script>
     (function () {
-      const qs = (id) => document.getElementById(id);
+      // Solo exigimos username (session_id no es accesible en JS por HttpOnly)
+      var requiredCookies = ['username'];
+      function hasCookie(name){
+        return document.cookie.split(';').some(function(c){ return c.trim().indexOf(name + '=') === 0; });
+      }
+      for (var i=0;i<requiredCookies.length;++i){
+        if (!hasCookie(requiredCookies[i])) {
+          window.location.replace('/users/user-test.html');
+          return;
+        }
+      }
+
+      const qs = (id)=>document.getElementById(id);
       const statusEl = qs('status');
 
-      function setStatus(msg, isError) {
+      function setStatus(msg,isError){
         statusEl.textContent = msg || '';
         statusEl.classList.toggle('error', !!isError);
       }
 
-      function getCookie(name) {
-        const m = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)'));
+      function getCookie(name){
+        var m = document.cookie.match(new RegExp('(?:^|; )'+name.replace(/([.$?*|{}()[\]\\/+^])/g,'\\$1')+'=([^;]*)'));
         return m ? decodeURIComponent(m[1]) : null;
       }
 
-      function mask(value, keep = 6) {
-        if (!value) return '—';
-        return value.length <= keep ? value : '••••••' + value.slice(-keep);
-      }
+      // session_id no se puede leer -> muestra marcador
+      qs('s-cookie').textContent = 'HttpOnly';
+      qs('s-agent').textContent = navigator.userAgent;
 
-      function fmtDate(ts) {
-        const d = ts ? new Date(ts) : null;
-        return d && !isNaN(d) ? d.toLocaleString() : '—';
-      }
-
-      async function loadUser() {
-        // 1) Verificar cookie de sesión
-        const sid = getCookie('session_id');
-        if (!sid) {
-          alert('Debes iniciar sesión para acceder a esta página.');
-          window.location.href = '/users/user-test.html';
-          return;
-        }
-
-        // Mostrar info básica de cookie y agente
-        qs('s-cookie').textContent = mask(sid, 8);
-        qs('s-agent').textContent = navigator.userAgent;
-
-        // 2) Consultar al servidor los datos del usuario
+      async function loadUser(){
         try {
-          const res = await fetch('/me', { credentials: 'include' });
+          const res = await fetch('/me', { credentials:'include' });
           if (res.status === 401 || res.status === 403) {
-            alert('Tu sesión no es válida o ha expirado. Inicia sesión de nuevo.');
-            window.location.href = '/users/user-test.html';
+            window.location.replace('/users/user-test.html');
             return;
           }
-          if (!res.ok) throw new Error('Respuesta no válida');
-
-          // Suponemos JSON: { username, email, last_login, roles, session:{expires_at} }
-          const data = await res.json().catch(() => ({}));
-
-          qs('u-username').textContent = data.username || '—';
+          if (!res.ok) throw new Error();
+          const data = await res.json().catch(function(){ return {}; });
+          qs('u-username').textContent = data.username || getCookie('username') || '—';
           qs('u-email').textContent = data.email || '—';
-          qs('u-last').textContent = fmtDate(data.last_login);
-          qs('u-roles').textContent = Array.isArray(data.roles) && data.roles.length ? data.roles.join(', ') : '—';
-          qs('s-exp').textContent = fmtDate(data.session && data.session.expires_at);
-
+          qs('u-last').textContent = data.last_login ? new Date(data.last_login).toLocaleString() : '—';
+          qs('u-roles').textContent = (data.roles && data.roles.length) ? data.roles.join(', ') : '—';
+          qs('s-exp').textContent = (data.session && data.session.expires_at) ? new Date(data.session.expires_at).toLocaleString() : '—';
           setStatus('Sesión verificada.');
-        } catch (e) {
+        } catch(e){
           setStatus('No se pudo obtener la información del usuario.', true);
         }
       }
 
-      async function logout() {
-        setStatus('');
+      function expireClientCookies() {
+        // Borra lo que sí es accesible
+        document.cookie = 'username=; Path=/; Max-Age=0';
+        // Intento (no tendrá efecto si es HttpOnly, pero no hace daño)
+        document.cookie = 'session_id=; Path=/; Max-Age=0';
+      }
+
+      async function serverLogout() {
         try {
           await fetch('/logout', { method: 'POST', credentials: 'include' });
-        } finally {
-          window.location.href = '/users/user-test.html';
-        }
+        } catch (_) {}
       }
+
+      async function fullLogout(redirectTo) {
+        expireClientCookies();
+        await serverLogout();
+        window.location.replace(redirectTo || '/users/user-test.html');
+      }
+
+      async function logout(){
+        setStatus('');
+        await fullLogout('/users/user-test.html');
+      }
+
+      // Interceptar "Cambiar de usuario" para limpiar cookies antes
+      var changeLink = document.getElementById('change-user-link');
+      changeLink.addEventListener('click', function(e){
+        e.preventDefault();
+        fullLogout('/users/user-test.html');
+      });
 
       qs('logout-btn').addEventListener('click', logout);
       loadUser();

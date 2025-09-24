@@ -10,7 +10,7 @@ _user_id(user_id), _user_name(user_name), _user_pasword(user_pasword), _times_co
 
 User::~User(){}
 
-unsigned int User::getId() {return (_user_id);};
+unsigned int User::getId() const {return (_user_id);};
 unsigned int User::getTimesConected() {return (_times_conected);};
 std::string User::getName() const {return (_user_name);};
 std::string User::getPasword() {return (_user_pasword);};

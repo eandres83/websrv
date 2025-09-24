@@ -324,22 +324,41 @@ Response MethodHandler::_handleUserSingup(Client &client, Response &response)
 			return response; // salir temprano
 		}
 	}
-	client.getServer().addUser(username, password, email);
-	    // Respuesta de éxito: 
+    if (client.getServer().addUser(username, password, email))
+    {
+        Logger::log(INFO, "[SIGNUP] Usuario creado: " + username);
 
+        // Generar token de sesión (simple)
+        unsigned int sessionId = client.getServer().findUserByName(username)->getId();
 
+        // (Opcional) Aquí podrías registrar la sesión en el servidor si existe tal lógica:
+        // client.getServer().registerSession(sessionId, username);
 
-	//TODO: MEJORAR LA RESPUESTA EXITOSA
+        // Construir respuesta 201 + JSON con redirect opcional
+        std::stringstream body;
+        body << "{"
+             << "\"username\":\"" << username << "\","
+             << "\"redirect\":\"/users/user-test.html\""
+             << "}";
 
-		std::stringstream body;
-		body << "{\n"
-			 << "  \"status\": \"created\",\n"
-			 << "  \"username\": \"" << username << "\"\n"
-			 << "}\n";
-	
-		response.buildCustomResponse("201", "Created", body.str());
-		response.addHeader("Content-Type", "application/json");
-		// response.addHeader("Location", "/users/user-test.html"); // opcional (pista de nuevo recurso)
-		// response.addHeader("Set-Cookie", "session=abc123; Path=/; HttpOnly");
+        response.buildCustomResponse("201", "Created", body.str());
+        response.addHeader("Content-Type", "application/json");
+        // Cookies (ajusta atributos según tus necesidades)
+        {
+            std::ostringstream sid;
+            sid << sessionId;
+            // Deja HttpOnly (más seguro). JS NO podrá leer session_id.
+            response.addHeader("Set-Cookie", "session_id=" + sid.str() + "; HttpOnly; Path=/; Max-Age=3600");
+        }
+        response.addHeader("Set-Cookie", "username=" + username + "; Path=/; Max-Age=3600");
+
+        return response;
+    }
+    else
+    {
+        Logger::log(FATAL, "[SIGNUP] Fallo al crear usuario (addUser retornó false)");
+        response.buildErrorResponse(500, client.getConfig());
+        return response;
+    }
 	return (response);
 }
