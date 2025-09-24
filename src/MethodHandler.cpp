@@ -233,8 +233,8 @@ std::string MethodHandler::getMimeType(const std::string& path)
 Response	MethodHandler::_handleUser(Client& client, Response& response)
 {
 	const Request& request = client.getRequest();
-	// if (request.getPath() == "/loging")
-	// 	return (_handleUserLoging(client, response));
+	if (request.getPath() == "/loging")
+		return (_handleUserLoging(client, response));
 	 if (request.getPath().find("/signup") != std::string::npos)
 		return (_handleUserSingup(client, response));
 	return (response);
@@ -285,6 +285,21 @@ static std::map<std::string, std::string> parseFormURLEncoded(const std::string 
 	return fields;
 }
 
+static void setUserSessionCookies(Response &response, const User &user)
+{
+    std::ostringstream id; id << user.getId();
+    std::ostringstream tc; tc << user.getTimesConected();
+
+    std::string headerValue;
+    headerValue += "session_id=" + id.str() + "; HttpOnly; Path=/; Max-Age=3600; SameSite=Lax";
+    headerValue += "\r\nSet-Cookie: username=" + user.getName() + "; Path=/; Max-Age=3600; SameSite=Lax";
+    headerValue += "\r\nSet-Cookie: access_count=" + tc.str() + "; Path=/; Max-Age=3600; SameSite=Lax";
+    if (!user.getEmail().empty())
+        headerValue += "\r\nSet-Cookie: email=" + user.getEmail() + "; Path=/; Max-Age=3600; SameSite=Lax";
+    response.addHeader("Set-Cookie", headerValue);
+}
+
+
 static std::string getRequiredField(const std::map<std::string,std::string>& m, const char* key)
 {
     std::map<std::string,std::string>::const_iterator it = m.find(key);
@@ -298,7 +313,6 @@ Response MethodHandler::_handleUserSingup(Client &client, Response &response)
 	const Request &request = client.getRequest();
 	std::map<std::string, std::string> claveValor = parseFormURLEncoded(request.getBody());
     const std::map<unsigned int, User>& users = client.getServer().getRegisteredUsersRef();
-
 	for (std::map<std::string, std::string>::const_iterator it = claveValor.begin();
 		it != claveValor.end(); ++it)
 	{
@@ -306,7 +320,6 @@ Response MethodHandler::_handleUserSingup(Client &client, Response &response)
 		ss << "[SIGNUP] " << it->first << " = " << it->second;
 		Logger::log(INFO, ss.str());
 	}
-
 	std::string username = getRequiredField(claveValor, "username");
     std::string email    = getRequiredField(claveValor, "email");
     std::string password = getRequiredField(claveValor, "password");
@@ -326,34 +339,18 @@ Response MethodHandler::_handleUserSingup(Client &client, Response &response)
 	}
     if (client.getServer().addUser(username, password, email))
     {
-        Logger::log(INFO, "[SIGNUP] Usuario creado: " + username);
-
-        // Generar token de sesión (simple)
-        unsigned int sessionId = client.getServer().findUserByName(username)->getId();
-
-        // (Opcional) Aquí podrías registrar la sesión en el servidor si existe tal lógica:
-        // client.getServer().registerSession(sessionId, username);
-
-        // Construir respuesta 201 + JSON con redirect opcional
-        std::stringstream body;
-        body << "{"
-             << "\"username\":\"" << username << "\","
-             << "\"redirect\":\"/users/user-test.html\""
-             << "}";
-
-        response.buildCustomResponse("201", "Created", body.str());
-        response.addHeader("Content-Type", "application/json");
-        // Cookies (ajusta atributos según tus necesidades)
-        {
-            std::ostringstream sid;
-            sid << sessionId;
-            // Deja HttpOnly (más seguro). JS NO podrá leer session_id.
-            response.addHeader("Set-Cookie", "session_id=" + sid.str() + "; HttpOnly; Path=/; Max-Age=3600");
-        }
-        response.addHeader("Set-Cookie", "username=" + username + "; Path=/; Max-Age=3600");
-
-        return response;
-    }
+		Logger::log(INFO, "[SIGNUP] Usuario creado: " + username);
+		const User *u = client.getServer().findUserByName(username);
+		std::stringstream body;
+		body << "{"
+			<< "\"username\":\"" << username << "\","
+			<< "\"redirect\":\"/users/user-test.html\""
+			<< "}";
+		response.buildCustomResponse("201", "Created", body.str());
+		response.addHeader("Content-Type", "application/json");
+		setUserSessionCookies(response, *u); // Usa helper consistente
+		return response;
+	}
     else
     {
         Logger::log(FATAL, "[SIGNUP] Fallo al crear usuario (addUser retornó false)");
@@ -361,4 +358,9 @@ Response MethodHandler::_handleUserSingup(Client &client, Response &response)
         return response;
     }
 	return (response);
+}
+
+Response MethodHandler::_handleUserLoging(Client& client, Response &response)
+{
+	
 }
