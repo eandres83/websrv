@@ -1,7 +1,7 @@
 #include "../includes/Client.hpp"
 
-Client::Client(int fd, const ServerConfig& config) : _socket_fd(fd), _bytes_sent(0), _state(READING_HEADERS), _config(config)
-, _cgi_stdout_fd(-1), _cgi_stdin_fd(-1), _cgi_pid(-1)
+Client::Client(int fd, const ServerConfig& config, Server *server) : _socket_fd(fd), _bytes_sent(0), _state(READING_HEADERS), _config(config)
+, _cgi_stdout_fd(-1), _cgi_stdin_fd(-1), _cgi_pid(-1), _server(server)
 {
 }
 
@@ -87,3 +87,9 @@ void Client::clearCGIContext()
     _cgi_stdout_fd = -1;
     _cgi_buffer.clear();
 }
+
+Server& Client::getServer() const
+{
+	return (*_server);
+}
+

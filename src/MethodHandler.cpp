@@ -1,4 +1,5 @@
 #include "../includes/CGI.hpp"
+#include "../includes/Logger.hpp"
 
 // Funcion principal que gestiona todo los metodos
 Response MethodHandler::handle(Client& client, const LocationConfig* location)
@@ -51,16 +52,23 @@ Response MethodHandler::_handlePost(Client& client, const LocationConfig* locati
 {
 	const Request& request = client.getRequest();
 	const ServerConfig& config = client.getConfig();
+	
+	std::string full_path = request.getFullPath();
+	Response response;
 	// Soporte POST para CGI
 	if (request.getIsCGI()) // -> [`Request::getIsCGI`](src/Request.cpp)
 	{
-		Response response;
 		manageCGI(client, response); // -> [`manageCGI`](src/CGI.cpp)
 		return response;
 	}
 
-	std::string full_path = request.getFullPath();
-	Response response;
+	// //Manejo de los usuarios
+	if (request.getPath().find("/users/") != std::string::npos)
+	{
+		response = _handleUser(client, response);
+		return (response);
+	}
+
 
 	std::string final_path;
 	if (location && !location->upload_path.empty())
@@ -222,3 +230,107 @@ std::string MethodHandler::getMimeType(const std::string& path)
 	return ("application/octet-stream");
 }
 
+Response	MethodHandler::_handleUser(Client& client, Response& response)
+{
+	const Request& request = client.getRequest();
+	// if (request.getPath() == "/loging")
+	// 	return (_handleUserLoging(client, response));
+	 if (request.getPath().find("/signup") != std::string::npos)
+		return (_handleUserSingup(client, response));
+	return (response);
+}
+
+static std::string urlDecode(const std::string& in)
+{
+    std::string out;
+    out.reserve(in.size());
+    for (size_t i = 0; i < in.size(); ++i)
+    {
+        unsigned char c = in[i];
+        if (c == '+')
+            out.push_back(' ');
+        else if (c == '%' && i + 2 < in.size()
+                 && std::isxdigit(static_cast<unsigned char>(in[i+1]))
+                 && std::isxdigit(static_cast<unsigned char>(in[i+2])))
+        {
+            char hex[3] = { static_cast<char>(in[i+1]), static_cast<char>(in[i+2]), 0 };
+            out.push_back(static_cast<char>(strtol(hex, NULL, 16)));
+            i += 2;
+        }
+        else
+            out.push_back(c);
+    }
+    return out;
+}
+
+static std::map<std::string, std::string> parseFormURLEncoded(const std::string &body)
+{
+	std::map<std::string, std::string> fields;
+	size_t pos = 0;
+	while (pos < body.size())
+	{
+		size_t amp = body.find('&', pos);
+		if (amp == std::string::npos)
+			amp = body.size();
+		std::string pair = body.substr(pos, amp - pos);
+		size_t eq = pair.find('=');
+		if (eq != std::string::npos)
+		{
+			std::string key = urlDecode(pair.substr(0, eq));
+			std::string val = urlDecode(pair.substr(eq + 1));
+			fields[key] = val;
+		}
+		pos = amp + 1;
+	}
+	return fields;
+}
+
+static std::string getRequiredField(const std::map<std::string,std::string>& m, const char* key)
+{
+    std::map<std::string,std::string>::const_iterator it = m.find(key);
+    if (it == m.end() || it->second.empty())
+        return "";
+    return it->second;
+}
+
+Response MethodHandler::_handleUserSingup(Client &client, Response &response)
+{
+	const Request &request = client.getRequest();
+	(void)request;
+	(void)response;
+	Logger::log(INFO, "ESTAMOS EN EL GETSOR DE SINGUP");
+
+	std::map<std::string, std::string> claveValor = parseFormURLEncoded(request.getBody());
+    const std::map<unsigned int, User>& users = client.getServer().getRegisteredUsersRef();
+
+
+	for (std::map<std::string, std::string>::const_iterator it = claveValor.begin();
+		 it != claveValor.end(); ++it)
+	{
+		std::stringstream ss;
+		ss << "[SIGNUP] " << it->first << " = " << it->second;
+		Logger::log(INFO, ss.str());
+	}
+
+	std::string username = getRequiredField(claveValor, "username");
+    std::string email    = getRequiredField(claveValor, "email");
+    std::string password = getRequiredField(claveValor, "password");
+
+
+	// Buscar duplicado
+	for (std::map<unsigned int, User>::const_iterator it = users.begin();
+		 it != users.end(); ++it)
+	{
+		Logger::log(TRACE, "USER: " + username);
+
+		if (it->second.getName() == username)
+		{
+			Logger::log(INFO, "USUARIO REPETIDO: " + username);
+			response.buildErrorResponse(409, client.getConfig());
+			return response; // salir temprano
+		}
+		
+	}
+	client.getServer().addUser(username, password, email);
+	return (response);
+}

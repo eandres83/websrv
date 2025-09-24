@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include "Config.hpp"
 #include "Request.hpp"
+#include "User.hpp"
 
 enum ClientState
 {
@@ -16,6 +17,7 @@ enum ClientState
 	CGI_RUNNING
 };
 
+class Server;
 
 class Client
 {
@@ -33,9 +35,13 @@ class Client
 		int       _cgi_stdin_fd;
 		pid_t     _cgi_pid;
 		std::string _cgi_buffer;
+		Server	*_server;
+
+	//Referencia a listado de usuarios
+
 
 	public:
-		Client(int fd, const ServerConfig& config);
+		Client(int fd, const ServerConfig& config, Server *server);
 		~Client();
 
 		// --- Getters ---
@@ -46,6 +52,7 @@ class Client
 		ClientState	getState() const;
 		const ServerConfig& getConfig() const;
 		size_t		getBytesSent() const;
+		Server& getServer() const;
 
 		// --- Setters y metodos de accion ---
 		void		setState(ClientState new_state);

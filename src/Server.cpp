@@ -154,9 +154,13 @@ void Server::acceptNewConnection(int listener_fd, int epoll_fd)
 
 	// Buscamos la configuracion correcta usando el listener_fd
 	const ServerConfig& client_config = _listener_configs.at(listener_fd);
-	// Creamos el cliente, pasandole su configuracion especifica
-	_clients.insert(std::make_pair(client_socket, Client(client_socket, client_config)));
 
+    std::pair<std::map<int, Client>::iterator,bool> ins =
+        _clients.insert(std::make_pair(client_socket, Client(client_socket, client_config, this)));
+    if (!ins.second) {
+        close(client_socket);
+        return;
+    }
 	struct epoll_event client_event;
 	client_event.events = EPOLLIN | EPOLLET; // Edge-Triggered para eficiencia.
 	client_event.data.fd = client_socket;
@@ -384,5 +388,34 @@ void Server::handleCGIEvent(Client& client, int cgi_fd, int epoll_fd)
 		epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client.getSocketFd(), &ev);
 		return;
 	}
+}
+
+std::map<unsigned int, User> Server::getRegisteredUsers() {return (_registered_users); };
+
+bool Server::addUser(const std::string& name, const std::string& password, const std::string& email) {
+    unsigned int new_id = _registered_users.size() + 1;
+
+    while (_registered_users.find(new_id) != _registered_users.end()) {
+        ++new_id;
+    }
+    _registered_users.insert(std::make_pair(new_id, User(new_id, name, password, email)));
+    return true;
+}
+
+User* Server::findUser(unsigned int id) {
+    std::map<unsigned int, User>::iterator it = _registered_users.find(id);
+    return (it == _registered_users.end()) ? NULL : &it->second;
+}
+
+const std::map<unsigned int, User>& Server::getRegisteredUsersRef() const {
+    return _registered_users;
+}
+
+const User* Server::findUserByName(const std::string& name) const {
+    for (std::map<unsigned int, User>::const_iterator it = _registered_users.begin(); it != _registered_users.end(); ++it) {
+        if (it->second.getName() == name)
+            return &it->second;
+    }
+    return NULL;
 }
 

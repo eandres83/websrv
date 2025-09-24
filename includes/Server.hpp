@@ -22,6 +22,7 @@ extern int g_epoll_fd;
 #include "Config.hpp"
 #include "Response.hpp"
 #include "Colors.hpp"
+#include "User.hpp"
 
 #define MAX_FDS 200
 
@@ -32,6 +33,7 @@ class Server
 		std::map<int, Client> _clients;
 		std::vector<int> _listenSockets;
 		std::map<int, ServerConfig> _listener_configs;
+		std::map<unsigned int, User> _registered_users;
 
 		void acceptNewConnection(int listener_fd, int epoll_fd);
 		void handleClientRequest(int client_fd, int epoll_fd);
@@ -43,6 +45,12 @@ class Server
 		Server(const Config& config);
 		~Server();
 		void run();
-};
+        std::map<unsigned int, User> getRegisteredUsers();
+
+        bool addUser(const std::string& name, const std::string& password , const std::string& email);
+        User* findUser(unsigned int id);
+        const std::map<unsigned int, User>& getRegisteredUsersRef() const;
+		const User* findUserByName(const std::string& name) const;
+	};
 
 #endif // SERVER_HPP

@@ -33,6 +33,7 @@ bool Config::parse(const char* filename)
 	root_location.path = "/";
 	root_location.root_directory = "./www";
 	root_location.allowed_methods.push_back("GET");
+	root_location.allowed_methods.push_back("POST"); //Necesario para hacer que fincione el loging de usuariso
 	root_location.autoindex = true;
 	root_location.return_code = 0;
 	root_location.index_files.push_back("index.html");
@@ -60,6 +61,8 @@ bool Config::parse(const char* filename)
 	server2_config.error_pages[404] = "./www/404.html";
 	server2_config.enable_reuse_addr = 1;
 	server2_config.client_max_body_size = 1048576;
+	server2_config.allowed_methods.push_back("GET");
+	server2_config.allowed_methods.push_back("POST");
 
 	LocationConfig server2_root;
 	server2_root.path = "/";
