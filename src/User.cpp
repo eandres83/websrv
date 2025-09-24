@@ -16,5 +16,5 @@ std::string User::getName() const {return (_user_name);};
 std::string User::getPasword() const {return (_user_pasword);};
 std::string User::getEmail() const {return (_user_email);}
 
-void User::incriseTimesConected() {_times_conected++;}
+void User::incriseTimesConected() {_times_conected = _times_conected + 1;}
 

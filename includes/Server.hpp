@@ -50,6 +50,7 @@ class Server
         bool addUser(const std::string& name, const std::string& password , const std::string& email);
         User* findUser(unsigned int id);
         const std::map<unsigned int, User>& getRegisteredUsersRef() const;
+        std::map<unsigned int, User>& getRegisteredUsersRefNoConst();
 		const User* findUserByName(const std::string& name) const;
 	};
 

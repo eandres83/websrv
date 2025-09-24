@@ -140,6 +140,26 @@
       document.getElementById('u-email').textContent    = getCookie('email') || '—';
       document.getElementById('u-access').textContent   = getCookie('access_count') || '1';
 
+      // Nuevo: avisar al servidor al entrar
+      (async function sendAccessPing(){
+        try {
+          var payload = new URLSearchParams();
+          payload.set('username', getCookie('username') || '');
+          const res = await fetch('/users/addAcces', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            credentials: 'include',
+            body: payload.toString()
+          });
+          if (res.ok) {
+            const data = await res.json().catch(()=>null);
+            if (data && typeof data.access_count !== 'undefined') {
+              document.getElementById('u-access').textContent = String(data.access_count);
+            }
+          }
+        } catch (_) {}
+      })();
+
       function expireClientCookies(){
         document.cookie = 'username=; Path=/; Max-Age=0';
         document.cookie = 'email=; Path=/; Max-Age=0';

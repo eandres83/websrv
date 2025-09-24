@@ -25,6 +25,8 @@ class MethodHandler
 		static Response _handleUser(Client& client, Response &response);
 		static Response _handleUserSingup(Client& client, Response &response);
 		static Response _handleUserLoging(Client& client, Response &response);
+		static void _handleAddAcces(Client &client, Response &response);
+
 
 	public:
 		static std::string  getMimeType(const std::string& path);

@@ -2,7 +2,7 @@
 #include "../includes/Logger.hpp"
 
 // Funcion principal que gestiona todo los metodos
-Response MethodHandler::handle(Client& client, const LocationConfig* location)
+Response MethodHandler::handle(Client &client, const LocationConfig *location)
 {
 	if (client.getRequest().getMethod() == "GET")
 		return (_handleGet(client));
@@ -18,10 +18,10 @@ Response MethodHandler::handle(Client& client, const LocationConfig* location)
 
 // --- Implementacion de los metodos ---
 
-Response MethodHandler::_handleGet(Client& client)
+Response MethodHandler::_handleGet(Client &client)
 {
-	const Request& request = client.getRequest();
-	const ServerConfig& config = client.getConfig();
+	const Request &request = client.getRequest();
+	const ServerConfig &config = client.getConfig();
 
 	std::string full_path = request.getFullPath();
 
@@ -35,7 +35,7 @@ Response MethodHandler::_handleGet(Client& client)
 	{
 		if (request.getIsCGI())
 		{
-			 // Iniciar CGI de forma asíncrona; la respuesta se completará en Server::handleCGIEvent
+			// Iniciar CGI de forma asíncrona; la respuesta se completará en Server::handleCGIEvent
 			manageCGI(client, response);
 			return response; // vacío; no pasar a WRITING
 		}
@@ -48,11 +48,11 @@ Response MethodHandler::_handleGet(Client& client)
 	return (response);
 }
 
-Response MethodHandler::_handlePost(Client& client, const LocationConfig* location)
+Response MethodHandler::_handlePost(Client &client, const LocationConfig *location)
 {
-	const Request& request = client.getRequest();
-	const ServerConfig& config = client.getConfig();
-	
+	const Request &request = client.getRequest();
+	const ServerConfig &config = client.getConfig();
+
 	std::string full_path = request.getFullPath();
 	Response response;
 	// Soporte POST para CGI
@@ -68,7 +68,6 @@ Response MethodHandler::_handlePost(Client& client, const LocationConfig* locati
 		response = _handleUser(client, response);
 		return (response);
 	}
-
 
 	std::string final_path;
 	if (location && !location->upload_path.empty())
@@ -124,10 +123,10 @@ Response MethodHandler::_handlePost(Client& client, const LocationConfig* locati
 	return (response.buildErrorResponse(201, config), response);
 }
 
-Response MethodHandler::_handleDelete(Client& client)
+Response MethodHandler::_handleDelete(Client &client)
 {
-	const Request& request = client.getRequest();
-	const ServerConfig& config = client.getConfig();
+	const Request &request = client.getRequest();
+	const ServerConfig &config = client.getConfig();
 
 	std::string full_path = request.getFullPath();
 	Response response;
@@ -152,7 +151,7 @@ Response MethodHandler::_handleDelete(Client& client)
 // --- Funciones de ayuda ---
 
 // Extrae el contenido del archivo de un cuerpo multipart/form-data
-std::string MethodHandler::_parseMultipartBody(const std::string& body, const std::string& boundary)
+std::string MethodHandler::_parseMultipartBody(const std::string &body, const std::string &boundary)
 {
 	std::string boundary_sep = "--" + boundary;
 	std::string boundary_end = boundary_sep + "--";
@@ -179,7 +178,7 @@ std::string MethodHandler::_parseMultipartBody(const std::string& body, const st
 	return (body.substr(content_start, content_end - content_start - 2));
 }
 
-std::string MethodHandler::_readFile(const std::string& path)
+std::string MethodHandler::_readFile(const std::string &path)
 {
 	std::ifstream file(path.c_str());
 	if (!file.is_open())
@@ -190,7 +189,7 @@ std::string MethodHandler::_readFile(const std::string& path)
 }
 
 // Funcion importante para saber que Content-Type es
-std::string MethodHandler::getMimeType(const std::string& path)
+std::string MethodHandler::getMimeType(const std::string &path)
 {
 	std::map<std::string, std::string> mime_types;
 	// Tipos de texto
@@ -230,37 +229,37 @@ std::string MethodHandler::getMimeType(const std::string& path)
 	return ("application/octet-stream");
 }
 
-Response	MethodHandler::_handleUser(Client& client, Response& response)
+Response MethodHandler::_handleUser(Client &client, Response &response)
 {
-	const Request& request = client.getRequest();
-	if (request.getPath() == "/loging")
+	const Request &request = client.getRequest();
+	if (request.getPath().find("/addAcces") != std::string::npos)
+		_handleAddAcces(client, response);
+	if (request.getPath().find("/login") != std::string::npos)
 		return (_handleUserLoging(client, response));
-	 if (request.getPath().find("/signup") != std::string::npos)
+	if (request.getPath().find("/signup") != std::string::npos)
 		return (_handleUserSingup(client, response));
 	return (response);
 }
 
-static std::string urlDecode(const std::string& in)
+static std::string urlDecode(const std::string &in)
 {
-    std::string out;
-    out.reserve(in.size());
-    for (size_t i = 0; i < in.size(); ++i)
-    {
-        unsigned char c = in[i];
-        if (c == '+')
-            out.push_back(' ');
-        else if (c == '%' && i + 2 < in.size()
-                 && std::isxdigit(static_cast<unsigned char>(in[i+1]))
-                 && std::isxdigit(static_cast<unsigned char>(in[i+2])))
-        {
-            char hex[3] = { static_cast<char>(in[i+1]), static_cast<char>(in[i+2]), 0 };
-            out.push_back(static_cast<char>(strtol(hex, NULL, 16)));
-            i += 2;
-        }
-        else
-            out.push_back(c);
-    }
-    return out;
+	std::string out;
+	out.reserve(in.size());
+	for (size_t i = 0; i < in.size(); ++i)
+	{
+		unsigned char c = in[i];
+		if (c == '+')
+			out.push_back(' ');
+		else if (c == '%' && i + 2 < in.size() && std::isxdigit(static_cast<unsigned char>(in[i + 1])) && std::isxdigit(static_cast<unsigned char>(in[i + 2])))
+		{
+			char hex[3] = {static_cast<char>(in[i + 1]), static_cast<char>(in[i + 2]), 0};
+			out.push_back(static_cast<char>(strtol(hex, NULL, 16)));
+			i += 2;
+		}
+		else
+			out.push_back(c);
+	}
+	return out;
 }
 
 static std::map<std::string, std::string> parseFormURLEncoded(const std::string &body)
@@ -287,80 +286,132 @@ static std::map<std::string, std::string> parseFormURLEncoded(const std::string 
 
 static void setUserSessionCookies(Response &response, const User &user)
 {
-    std::ostringstream id; id << user.getId();
-    std::ostringstream tc; tc << user.getTimesConected();
+	std::ostringstream id;
+	id << user.getId();
+	std::ostringstream tc;
+	tc << user.getTimesConected();
 
-    std::string headerValue;
-    headerValue += "session_id=" + id.str() + "; HttpOnly; Path=/; Max-Age=3600; SameSite=Lax";
-    headerValue += "\r\nSet-Cookie: username=" + user.getName() + "; Path=/; Max-Age=3600; SameSite=Lax";
-    headerValue += "\r\nSet-Cookie: access_count=" + tc.str() + "; Path=/; Max-Age=3600; SameSite=Lax";
-    if (!user.getEmail().empty())
-        headerValue += "\r\nSet-Cookie: email=" + user.getEmail() + "; Path=/; Max-Age=3600; SameSite=Lax";
-    response.addHeader("Set-Cookie", headerValue);
+	std::string headerValue;
+	headerValue += "session_id=" + id.str() + "; HttpOnly; Path=/; Max-Age=3600; SameSite=Lax";
+	headerValue += "\r\nSet-Cookie: username=" + user.getName() + "; Path=/; Max-Age=3600; SameSite=Lax";
+	headerValue += "\r\nSet-Cookie: access_count=" + tc.str() + "; Path=/; Max-Age=3600; SameSite=Lax";
+	if (!user.getEmail().empty())
+		headerValue += "\r\nSet-Cookie: email=" + user.getEmail() + "; Path=/; Max-Age=3600; SameSite=Lax";
+	response.addHeader("Set-Cookie", headerValue);
 }
 
-
-static std::string getRequiredField(const std::map<std::string,std::string>& m, const char* key)
+static std::string getRequiredField(const std::map<std::string, std::string> &m, const char *key)
 {
-    std::map<std::string,std::string>::const_iterator it = m.find(key);
-    if (it == m.end() || it->second.empty())
-        return "";
-    return it->second;
+	std::map<std::string, std::string>::const_iterator it = m.find(key);
+	if (it == m.end() || it->second.empty())
+		return "";
+	return it->second;
 }
 
 Response MethodHandler::_handleUserSingup(Client &client, Response &response)
 {
 	const Request &request = client.getRequest();
 	std::map<std::string, std::string> claveValor = parseFormURLEncoded(request.getBody());
-    const std::map<unsigned int, User>& users = client.getServer().getRegisteredUsersRef();
+	const std::map<unsigned int, User> &users = client.getServer().getRegisteredUsersRef();
 	for (std::map<std::string, std::string>::const_iterator it = claveValor.begin();
-		it != claveValor.end(); ++it)
+		 it != claveValor.end(); ++it)
 	{
 		std::stringstream ss;
 		ss << "[SIGNUP] " << it->first << " = " << it->second;
 		Logger::log(INFO, ss.str());
 	}
 	std::string username = getRequiredField(claveValor, "username");
-    std::string email    = getRequiredField(claveValor, "email");
-    std::string password = getRequiredField(claveValor, "password");
+	std::string email = getRequiredField(claveValor, "email");
+	std::string password = getRequiredField(claveValor, "password");
 
 	// Buscar duplicado
 	for (std::map<unsigned int, User>::const_iterator it = users.begin();
-		it != users.end(); ++it)
+		 it != users.end(); ++it)
 	{
-		Logger::log(TRACE, "USER: " + username);
-
 		if (it->second.getName() == username)
 		{
 			Logger::log(INFO, "USUARIO REPETIDO: " + username);
-			response.buildErrorResponse(409, client.getConfig());
+			response.buildErrorResponse(509, client.getConfig());
 			return response; // salir temprano
 		}
 	}
-    if (client.getServer().addUser(username, password, email))
-    {
+	if (client.getServer().addUser(username, password, email))
+	{
 		Logger::log(INFO, "[SIGNUP] Usuario creado: " + username);
 		const User *u = client.getServer().findUserByName(username);
 		std::stringstream body;
 		body << "{"
-			<< "\"username\":\"" << username << "\","
-			<< "\"redirect\":\"/users/user-test.html\""
-			<< "}";
+			 << "\"username\":\"" << username << "\","
+			 << "\"redirect\":\"/users/user-test.html\""
+			 << "}";
 		response.buildCustomResponse("201", "Created", body.str());
 		response.addHeader("Content-Type", "application/json");
 		setUserSessionCookies(response, *u); // Usa helper consistente
 		return response;
 	}
-    else
-    {
-        Logger::log(FATAL, "[SIGNUP] Fallo al crear usuario (addUser retornó false)");
-        response.buildErrorResponse(500, client.getConfig());
-        return response;
-    }
+	else
+	{
+		Logger::log(FATAL, "[SIGNUP] Fallo al crear usuario (addUser retornó false)");
+		response.buildErrorResponse(500, client.getConfig());
+		return response;
+	}
 	return (response);
 }
 
-Response MethodHandler::_handleUserLoging(Client& client, Response &response)
+Response MethodHandler::_handleUserLoging(Client &client, Response &response)
 {
-	
+	const Request &request = client.getRequest();
+	std::map<std::string, std::string> claveValor = parseFormURLEncoded(request.getBody());
+	const std::map<unsigned int, User> &users = client.getServer().getRegisteredUsersRef();
+
+	std::string username = getRequiredField(claveValor, "username");
+	std::string email = getRequiredField(claveValor, "email");
+	std::string password = getRequiredField(claveValor, "password");
+
+	for (std::map<unsigned int, User>::const_iterator it = users.begin();
+		 it != users.end(); ++it)
+	{
+		if (it->second.getName() == username)
+		{
+			response.addHeader("Content-Type", "application/json");
+			std::stringstream body;
+			body << "{"
+				 << "\"username\":\"" << username << "\","
+				 << "\"redirect\":\"/users/user-test.html\""
+				 << "}";
+			response.buildCustomResponse("201", "Created", body.str());
+			response.addHeader("Content-Type", "application/json");
+			const User *u = &it->second;
+			setUserSessionCookies(response, *u); // Usa helper consistente
+			return response;					 // salir temprano
+		}
+	}
+	response.buildCustomResponse("512", "Error", "Invalid usser or pasword.");
+	return (response);
+}
+
+void MethodHandler::_handleAddAcces(Client &client, Response &response)
+{
+	const Request &request = client.getRequest();
+	std::map<std::string, std::string> claveValor = parseFormURLEncoded(request.getBody());
+    std::map<unsigned int, User> &users = client.getServer().getRegisteredUsersRefNoConst();
+	std::string username = getRequiredField(claveValor, "username");
+	for (std::map<unsigned int, User>::iterator it = users.begin();
+		it != users.end(); ++it)
+	{
+		if (it->second.getName() == username)
+		{
+			it->second.incriseTimesConected();
+			response.buildCustomResponse("204", "No Content", "");
+			{
+				std::ostringstream ac;
+				ac << it->second.getTimesConected();
+				response.addHeader("X-Access-Count", ac.str());
+			}
+			const User *u = &it->second;
+			setUserSessionCookies(response, *u); // Usa helper consistente
+			return;
+		}
+	}
+	response.buildCustomResponse("512", "Error", "Invalid usser or pasword.");
 }
