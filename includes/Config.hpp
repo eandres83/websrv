@@ -5,6 +5,8 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <sstream>		//	For parsing purposes
+#include <fstream>		//	Also for parsing
 
 //	Forward declaration of a struct or class allows you to refer to it before it's fully defined, which can be useful for circular dependencies.
 //	In this case, it's a struct to hold the configuration for a specific `location` block.
