@@ -52,6 +52,7 @@ class	Config
 
 		bool	ParseServerBlock(const std::string& content, size_t& index);
 		bool	ParseListenDirective(const std::string& content, size_t& index, ServerConfig& server);
+		bool	ParseRootDirective(const std::string& content, size_t& index, ServerConfig& server);
 
 
 	public:

@@ -6,13 +6,40 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/30 13:14:04 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/01 11:25:40 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/01 11:47:07 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
 #include "../includes/Config.hpp"
 
-/*	Parses the 'listen port;' directive and handles errors.
+/*	Parses the 'root_directory' directive and handles errors.
+ *	server: The ServerConfig struct being populated.  */
+bool Config::ParseRootDirective(const std::string& content, size_t& index, ServerConfig& server)
+{
+	std::string	token;
+
+	token = GetNextToken(content, index);
+	if (token.empty())													//	Validation: Check if EOF.
+	{
+		std::cerr << "Error: Unexpected EOF after 'root' directive." << std::endl;
+		return false;
+	}
+	if (!server.root_directory.empty())									//	Validation: Check if root already set.
+	{
+		std::cerr << "Error: Duplicate 'root' directive." << std::endl;
+		return false;
+	}
+	server.root_directory = token;										//	Populate struct. No need for conversion since 'token' is already a string.
+	token = GetNextToken(content, index);								//	Expect ';'
+	if (token != ";")
+	{
+		std::cerr << "Error: Expected ';' after 'root' value, found '" << token << "'" << std::endl;
+		return false;
+	}
+	return true;
+}
+
+/*	Parses the 'listen' directive and handles errors.
  *	server: The ServerConfig struct being populated.  */
 bool Config::ParseListenDirective(const std::string& content, size_t& index, ServerConfig& server)
 {
@@ -76,7 +103,8 @@ bool	Config::ParseServerBlock(const std::string& content, size_t& index)
 		}
 		else if (token == "root")
 		{
-			/* ParseRootDirective(); */
+			if (!ParseRootDirective(content, index, new_server))
+				return false;
 		}
 		else if (token == "error_page_404")
 		{
