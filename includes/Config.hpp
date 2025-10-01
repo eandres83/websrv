@@ -50,6 +50,10 @@ class	Config
 		std::vector<ServerConfig>	_server_configs;	//	A vector to store all the parsed server configurations.
 		std::map<int, ServerConfig>	_listener_configs;	//	A map to quickly access a server config by its listening port. This is a common way to manage multiple servers.
 
+		bool	ParseServerBlock(const std::string& content, size_t& index);
+		bool	ParseListenDirective(const std::string& content, size_t& index, ServerConfig& server);
+
+
 	public:
 		Config(); 										// Default constructor.
 		~Config(); 										// Destructor.
