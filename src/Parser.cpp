@@ -6,11 +6,60 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/30 13:14:04 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/01 11:47:07 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/01 12:54:24 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
 #include "../includes/Config.hpp"
+
+/*	Parses the 'error_page' directive and handles errors.
+ *	server: The ServerConfig struct being populated.
+ *	Note that here we are not just storing a value but filling a map container with <key | value>.  */
+bool Config::ParseErrorPageDirective(const std::string& content, size_t& index, ServerConfig& server)
+{
+	std::string	code_token;
+	std::string	path_token;
+	std::string	semicolon;
+	int			error_code;
+	
+	code_token = GetNextToken(content, index);							//	Expect error code.
+	if (code_token.empty())
+	{
+		std::cerr << "Error: Unexpected EOF after 'error_page' directive." << std::endl;
+		return false;
+	}
+	std::istringstream code_ss(code_token);								// Convert code string to int
+	code_ss >> error_code;
+	if (code_ss.fail() || error_code < 300 || error_code > 599)			// Validation: Check conversion and range.
+	{    
+		std::cerr << "Error: Invalid or out-of-range error code '" << code_token << "'." << std::endl;
+		return false;
+	}
+	path_token = GetNextToken(content, index);							//	Expect path.
+	if (path_token.empty())												//	Validation. EOF
+	{
+		std::cerr << "Error: Unexpected EOF after error code (missing path)." << std::endl;
+		return false;
+	}
+	if (path_token == ";")												//	Validation: Path is not ';'.
+	{
+		std::cerr << "Error: 'error_page' path is missing." << std::endl;
+		return false;
+	}
+	if (server.error_pages.find(error_code) != server.error_pages.end())	//	Validation: Method .find() from map container to check double entries
+	{
+		std::cerr << "Error: Duplicate 'error_page' entry for code " << error_code << "." << std::endl;
+		return false;
+	}
+	semicolon = GetNextToken(content, index);							//	Expect ';'
+	if (semicolon != ";")
+	{
+		std::cerr << "Error: Expected ';' after error path, found '" << semicolon << "'" << std::endl;
+		return false;
+	}
+	server.error_pages[error_code] = path_token;						//	All OK. Populate.
+	return true;
+}
 
 /*	Parses the 'root_directory' directive and handles errors.
  *	server: The ServerConfig struct being populated.  */
@@ -106,9 +155,9 @@ bool	Config::ParseServerBlock(const std::string& content, size_t& index)
 			if (!ParseRootDirective(content, index, new_server))
 				return false;
 		}
-		else if (token == "error_page_404")
+		else if (token == "error_page")
 		{
-			/* Parse404Directive(); */
+			ParseErrorPageDirective(content, index, new_server);
 		}
 		else if (token == "autoindex")
 		{
