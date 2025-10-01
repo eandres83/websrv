@@ -6,15 +6,46 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/30 13:14:04 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/01 12:54:24 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/01 13:37:05 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
 #include "../includes/Config.hpp"
 
+/*	Parses the 'autoindex' directive. Note that here 'One-and-done' is not being enforced.
+	Instead, and for simplicity since this directive is a boolean, we are accepting 'Last-seen-wins' behavior.
+	Only grammar is checked */
+bool Config::ParseAutoindexDirective(const std::string& content, size_t& index, ServerConfig& server)
+{
+	std::string	token;
+
+	token = GetNextToken(content, index);
+	if (token.empty())
+	{
+		std::cerr << "Error: Unexpected EOF after 'autoindex' directive" << std::endl;
+		return false;
+	}
+	if (token == "on")
+		server.autoindex = true;
+	else if(token == "off")
+		server.autoindex = false;
+	else
+	{
+		std::cerr << "Error: Expected 'on' or 'off' after 'autoindex' directive. Found '" << token << "'" << std::endl;
+		return false;
+	}
+	token = GetNextToken(content, index);
+	if (token != ";")
+	{
+		std::cerr << "Error: Expected ';' after 'autoindex' value, found '" << token << "'" << std::endl;
+		return false;
+	}
+	return true;	
+}
+
 /*	Parses the 'error_page' directive and handles errors.
- *	server: The ServerConfig struct being populated.
- *	Note that here we are not just storing a value but filling a map container with <key | value>.  */
+	server: The ServerConfig struct being populated.
+	Note that here we are not just storing a value but filling a map container with <key | value>.  */
 bool Config::ParseErrorPageDirective(const std::string& content, size_t& index, ServerConfig& server)
 {
 	std::string	code_token;
@@ -57,7 +88,7 @@ bool Config::ParseErrorPageDirective(const std::string& content, size_t& index, 
 		std::cerr << "Error: Expected ';' after error path, found '" << semicolon << "'" << std::endl;
 		return false;
 	}
-	server.error_pages[error_code] = path_token;						//	All OK. Populate.
+	server.error_pages[error_code] = path_token;						//	All OK. Populate map.
 	return true;
 }
 
@@ -175,8 +206,6 @@ bool	Config::ParseServerBlock(const std::string& content, size_t& index)
 	}
 	_server_configs.push_back(new_server);		//	If all is OK, add new_server to configurations vector in main Config class.
 	return true;
-	
-	
 }
 
 /*	Extracts the next valid token from the raw config data (C++98 Safe).

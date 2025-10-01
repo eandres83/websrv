@@ -54,6 +54,7 @@ class	Config
 		bool	ParseListenDirective(const std::string& content, size_t& index, ServerConfig& server);
 		bool	ParseRootDirective(const std::string& content, size_t& index, ServerConfig& server);
 		bool	ParseErrorPageDirective(const std::string& content, size_t& index, ServerConfig& server);
+		bool	ParseAutoindexDirective(const std::string& content, size_t& index, ServerConfig& server);
 
 
 
