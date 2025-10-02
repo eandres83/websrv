@@ -52,6 +52,8 @@ class	Config
 		bool	ParseServerBlock(const std::string& content, size_t& index);										//	Server-specific parsing functions.
 		bool	ParseListenDirective(const std::string& content, size_t& index, ServerConfig& server);
 		bool	ParseClientMaxBodySizeDirective(const std::string& content, size_t& index, ServerConfig& server);
+		bool	ParseAllowedMethodsDirective(const std::string& content, size_t& index, ServerConfig& server);
+
 
 		
 	public:

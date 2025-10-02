@@ -3,8 +3,6 @@ SERVER BLOCK
 
 Add parsing helpers to:
 	enable_reuse_addr
-	client_max_body_size
-	allowed_methods
 	locations --> THIS ONE LAST
 
 

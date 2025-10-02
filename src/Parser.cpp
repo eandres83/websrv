@@ -6,11 +6,44 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/30 13:14:04 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/02 16:12:27 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/02 16:26:34 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
 #include "../includes/Config.hpp"
+
+
+/*	Parses the 'allowed_methods VERB1 VERB2 ... ;' directive.  */
+bool Config::ParseAllowedMethodsDirective(const std::string& content, size_t& index, ServerConfig& server)
+{
+	std::string token;
+
+	if (!server.allowed_methods.empty())											//	Validation. "One-and-done"
+	{
+		std::cerr << "Error: Duplicate 'allowed_methods' directive found." << std::endl;
+		return false;
+	}
+	while (!(token = GetNextToken(content, index)).empty())							//	Loop untill ';'
+	{
+		if (token == ";")															//	If end of directive...
+		{
+			if (server.allowed_methods.empty())										//	... at least one valid method must be present
+			{
+				std::cerr << "Error: 'allowed_methods' directive requires at least one verb." << std::endl;
+				return false;
+			}
+			return true;
+		}
+		if (!(token == "GET" || token == "POST" || token == "DELETE"))				//	Validation: Only uppercase.
+		{
+			std::cerr << "Error: Invalid HTTP method '" << token << "' in allowed_methods. Must be GET, POST, or DELETE." << std::endl;
+			return false;
+		}
+		server.allowed_methods.push_back(token);									//	Store valid method into the vector.
+	}
+	std::cerr << "Error: Unexpected EOF while parsing 'allowed_methods' directive (missing ';'?)." << std::endl;
+	return false;
+}
 
 /*	Parses 'client_max_body_size N[unit];' and converts it to bytes. */
 bool Config::ParseClientMaxBodySizeDirective(const std::string& content, size_t& index, ServerConfig& server)
