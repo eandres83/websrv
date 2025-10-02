@@ -1,5 +1,26 @@
-CGI
-Parse configuration file
 
-//
+SERVER BLOCK
 
+Add parsing helpers to:
+	enable_reuse_addr
+	client_max_body_size
+	allowed_methods
+	locations --> THIS ONE LAST
+
+
+
+********************************
+
+
+
+LOCATION BLOCK
+
+Add parsing helpers to:
+	path
+	allowed_methods
+	autoindex			(A template exists)
+	index_files
+	return_code
+	return_url
+	root_directory		(A template exists)
+	upload_path

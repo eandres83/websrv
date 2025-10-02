@@ -30,15 +30,14 @@ struct	LocationConfig
 //	IMPORTANT: `Server` settings are "by default" and may be overriden by specific `location` settings.
 struct	ServerConfig
 {
-	int				port;							//	The port number on which this server will listen.
-	std::string		root_directory;					//	The base directory for this virtual host.
-	int				enable_reuse_addr;				//	A flag for socket options, likely to allow the port to be reused quickly after a program exits.
-	bool			autoindex;						//	The default autoindex setting for the entire server.
-	long long		client_max_body_size;			//	The maximum size of a client's request body (e.g., for file uploads). The default is 1 MB.
-
-	std::vector<std::string> allowed_methods;		//	Allowed methods at the server level, before any location-specific rules. ["GET", "POST", "PUT", "DELETE"].
-	std::map<int, std::string> error_pages;			//	A map to store custom error pages (e.g., key 404 maps to value "./www/404.html").
-	std::vector<LocationConfig> locations;			//	A vector to store all the `LocationConfig` objects for this server.	
+	int							port;					//	The port number on which this server will listen.
+	std::string					root_directory;			//	The base directory for this virtual host.
+	int							enable_reuse_addr;		//	A flag for socket options, likely to allow the port to be reused quickly after a program exits.
+	bool						autoindex;				//	The default autoindex setting for the entire server.
+	long long					client_max_body_size;	//	The maximum size of a client's request body (e.g., for file uploads). The default is 1 MB.
+	std::vector<std::string>	allowed_methods;		//	Allowed methods at the server level, before any location-specific rules. ["GET", "POST", "PUT", "DELETE"].
+	std::map<int, std::string>	error_pages;			//	A map to store custom error pages (e.g., key 404 maps to value "./www/404.html").
+	std::vector<LocationConfig>	locations;				//	A vector to store all the `LocationConfig` objects for this server.	
 
 	ServerConfig(): autoindex(false), client_max_body_size(1048576) {}	//	A constructor to set default values for autoindex and client_max_body_size.
 };
@@ -50,20 +49,26 @@ class	Config
 		std::vector<ServerConfig>	_server_configs;	//	A vector to store all the parsed server configurations.
 		std::map<int, ServerConfig>	_listener_configs;	//	A map to quickly access a server config by its listening port. This is a common way to manage multiple servers.
 
-		bool	ParseServerBlock(const std::string& content, size_t& index);
+		bool	ParseServerBlock(const std::string& content, size_t& index);										//	Server-specific parsing functions.
 		bool	ParseListenDirective(const std::string& content, size_t& index, ServerConfig& server);
-		bool	ParseRootDirective(const std::string& content, size_t& index, ServerConfig& server);
-		bool	ParseErrorPageDirective(const std::string& content, size_t& index, ServerConfig& server);
-		bool	ParseAutoindexDirective(const std::string& content, size_t& index, ServerConfig& server);
+		bool	ParseClientMaxBodySizeDirective(const std::string& content, size_t& index, ServerConfig& server);
 
-
-
+		
 	public:
 		Config(); 										// Default constructor.
 		~Config(); 										// Destructor.
-
+		
 		bool	parse(const char* filename);							//	Method to start the parsing process.
 		const std::vector<ServerConfig>&	getServerConfigs() const;	//	Getter method to access (read-only) server configurations.
 };
+
+template <typename ConfigT>																							//	Shared parsing functions.
+bool	ParseRootDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct);
+template <typename ConfigT>
+bool	ParseAutoindexDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct);
+template <typename ConfigT>
+bool	ParseErrorPageDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct);
+
+#include "ParserTemplates.tpp"
 
 #endif
