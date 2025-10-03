@@ -49,6 +49,7 @@ class	Config
 		std::map<int, ServerConfig>	_listener_configs;	//	A map to quickly access a server config by its listening port. This is a common way to manage multiple servers.
 
 		bool	ParseServerBlock(const std::string& content, size_t& index);										//	Server-specific parsing functions.
+		bool	ParseLocationBlock(const std::string& content, size_t& index, ServerConfig& server);
 		bool	ParseListenDirective(const std::string& content, size_t& index, ServerConfig& server);
 		bool	ParseClientMaxBodySizeDirective(const std::string& content, size_t& index, ServerConfig& server);
 		bool	ParseReuseAddrDirective(const std::string& content, size_t& index, ServerConfig& server);

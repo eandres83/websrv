@@ -6,13 +6,11 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/30 13:14:04 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/03 13:44:06 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/03 14:04:31 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
 #include "../includes/Config.hpp"
-
-// Private member function of Config class
 
 /*	Parses the 'reuse_addr on|off;' directive and sets the boolean flag. By default it is 'off'. */
 bool Config::ParseReuseAddrDirective(const std::string& content, size_t& index, ServerConfig& server)
@@ -135,6 +133,65 @@ bool Config::ParseListenDirective(const std::string& content, size_t& index, Ser
 	return true;
 }
 
+// Private member function of Config class
+
+/*	Parses a single 'location path { ... }' block.
+	Expects to be called immediately AFTER the "location" token has been read
+	return true if the block was successfully parsed, false on syntax error. */
+bool Config::ParseLocationBlock(const std::string& content, size_t& index, ServerConfig& server)
+{
+	LocationConfig 	current_location;
+	std::string		token;
+
+	token = GetNextToken(content, index);						// Expect path.
+	if (token.empty() || token == "{")
+	{
+		std::cerr << "Error: Expected path after 'location' directive." << std::endl;
+		return false;
+	}
+	// TODO: Add validation for path format
+	current_location.path = token;								// Store path
+	token = GetNextToken(content, index);						//	Expect '{'
+	if (token != "{")
+	{
+		std::cerr << "Error: Expected '{' after location path, found '" << token << "'" << std::endl;
+		return false;
+	}
+	while (!(token = GetNextToken(content, index)).empty())		//	Parse directives untill '}' is found.
+	{
+		if (token == "}")										//	If '}', break the loop.
+			break; 
+		else if (token == "root")
+		{
+			if (!ParseRootDirectiveT(content, index, current_location)) 
+				return false;
+		}
+		else if (token == "autoindex")
+		{
+			if (!ParseAutoindexDirectiveT(content, index, current_location)) 
+				return false;
+		}
+		else if (token == "allowed_methods")
+		{
+			if (!ParseAllowedMethodsDirectiveT(content, index, current_location)) 
+			return false;
+		}
+		// TODO: Add location-specific directives like 'index', 'return', etc.)
+		else
+		{
+			std::cerr << "Error: Unknown directive '" << token << "' inside location block." << std::endl;
+			return false;
+		}
+	}
+	if (token.empty())
+	{
+		std::cerr << "Error: Unexpected end of file while parsing location block (missing '}')" << std::endl;
+		return false;
+	}
+	server.locations.push_back(current_location);				// If all is OK, attach location block to parent server
+	return true;
+}
+
 bool	Config::ParseServerBlock(const std::string& content, size_t& index)
 {
 	ServerConfig	new_server;								//	Instantiate a new ServerConfig struct to be filled and added to class Config.
@@ -169,15 +226,18 @@ bool	Config::ParseServerBlock(const std::string& content, size_t& index)
 		}
 		else if (token == "error_page")
 		{
-			ParseErrorPageDirectiveT(content, index, new_server);
+			if (!ParseErrorPageDirectiveT(content, index, new_server))
+				return false;
 		}
 		else if (token == "autoindex")
 		{
-			ParseAutoindexDirectiveT(content, index, new_server);
+			if (!ParseAutoindexDirectiveT(content, index, new_server))
+				return false;
 		}
 		else if (token == "upload_path")
 		{
-			ParseReuseAddrDirective(content, index, new_server);
+			if (!ParseReuseAddrDirective(content, index, new_server))
+				return false;
 		}
 		else
 		{

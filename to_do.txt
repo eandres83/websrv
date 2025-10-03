@@ -2,7 +2,6 @@
 SERVER BLOCK
 
 Add parsing helpers to:
-	enable_reuse_addr
 	locations --> THIS ONE LAST
 
 
@@ -13,6 +12,8 @@ Add parsing helpers to:
 
 LOCATION BLOCK
 
+
+
 Add parsing helpers to:
 	path
 	allowed_methods		(A template exists) DONE
@@ -22,3 +23,5 @@ Add parsing helpers to:
 	return_url
 	root_directory		(A template exists) DONE
 	upload_path
+
+Add Validation: path format
