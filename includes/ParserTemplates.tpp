@@ -1,4 +1,4 @@
-//	TEMPLATE FUNCTIONS FOR PARSING DIRECTIVES SHARED BY SERVER AND LOCATION
+//	TEMPLATE FUNCTIONS FOR PARSING DIRECTIVES SHARED BOTH BY SERVER AND LOCATION
 
 template <typename ConfigT>
 bool	ParseAutoindexDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct)
@@ -63,26 +63,26 @@ bool	ParseErrorPageDirectiveT(const std::string& content, size_t& index, ConfigT
 	std::string	semicolon;
 	int			error_code;
 	
-	code_token = GetNextToken(content, index);							//	Expect error code.
+	code_token = GetNextToken(content, index);								//	Expect error code.
 	if (code_token.empty())
 	{
 		std::cerr << "Error: Unexpected EOF after 'error_page' directive." << std::endl;
 		return false;
 	}
-	std::istringstream code_ss(code_token);								// Convert code string to int
+	std::istringstream code_ss(code_token);									// Convert code string to int
 	code_ss >> error_code;
-	if (code_ss.fail() || error_code < 300 || error_code > 599)			// Validation: Check conversion and range.
+	if (code_ss.fail() || error_code < 300 || error_code > 599)				// Validation: Check conversion and range.
 	{    
 		std::cerr << "Error: Invalid or out-of-range error code '" << code_token << "'." << std::endl;
 		return false;
 	}
-	path_token = GetNextToken(content, index);							//	Expect path.
-	if (path_token.empty())												//	Validation. EOF
+	path_token = GetNextToken(content, index);								//	Expect path.
+	if (path_token.empty())													//	Validation: EOF
 	{
 		std::cerr << "Error: Unexpected EOF after error code (missing path)." << std::endl;
 		return false;
 	}
-	if (path_token == ";")												//	Validation: Path is not ';'.
+	if (path_token == ";")													//	Validation: Path is not ';'.
 	{
 		std::cerr << "Error: 'error_page' path is missing." << std::endl;
 		return false;
@@ -92,13 +92,13 @@ bool	ParseErrorPageDirectiveT(const std::string& content, size_t& index, ConfigT
 		std::cerr << "Error: Duplicate 'error_page' entry for code " << error_code << "." << std::endl;
 		return false;
 	}
-	semicolon = GetNextToken(content, index);							//	Expect ';'
+	semicolon = GetNextToken(content, index);								//	Expect ';'
 	if (semicolon != ";")
 	{
 		std::cerr << "Error: Expected ';' after error path, found '" << semicolon << "'" << std::endl;
 		return false;
 	}
-	server.error_pages[error_code] = path_token;						//	All OK. Populate map.
+	server.error_pages[error_code] = path_token;							//	All OK. Populate map.
 	return true;
 }
 

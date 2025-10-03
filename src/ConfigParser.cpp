@@ -6,11 +6,47 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/30 13:14:04 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/03 10:04:22 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/03 13:44:06 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
 #include "../includes/Config.hpp"
+
+// Private member function of Config class
+
+/*	Parses the 'reuse_addr on|off;' directive and sets the boolean flag. By default it is 'off'. */
+bool Config::ParseReuseAddrDirective(const std::string& content, size_t& index, ServerConfig& server)
+{
+	std::string token;
+
+	token = GetNextToken(content, index);
+	if (token.empty())																//	Expect value.
+	{
+		std::cerr << "Error: Unexpected EOF after 'reuse_addr' directive." << std::endl;
+		return false;
+	}
+	if (server.enable_reuse_addr != false) 											//	Validation: No duplicates. This is tricky for booleans.
+	{
+		std::cerr << "Error: Duplicate 'reuse_addr' directive found." << std::endl;
+		return false;
+	}   
+	if (token == "on")																// Validate and assign.
+		server.enable_reuse_addr = true;
+	else if(token == "off")
+		server.enable_reuse_addr = false;
+	else
+	{
+		std::cerr << "Error: Expected 'on' or 'off' after 'reuse_addr'. Found '" << token << "'" << std::endl;
+		return false;
+	}
+	token = GetNextToken(content, index);
+	if (token != ";")																//	Expect ';'
+	{
+		std::cerr << "Error: Expected ';' after 'reuse_addr' value, found '" << token << "'" << std::endl;
+		return false;
+	}
+	return true;    
+}
 
 /*	Parses 'client_max_body_size N[unit];' and converts it to bytes. */
 bool Config::ParseClientMaxBodySizeDirective(const std::string& content, size_t& index, ServerConfig& server)
@@ -141,7 +177,7 @@ bool	Config::ParseServerBlock(const std::string& content, size_t& index)
 		}
 		else if (token == "upload_path")
 		{
-			/* ParseUploadPathDirective(); */
+			ParseReuseAddrDirective(content, index, new_server);
 		}
 		else
 		{
