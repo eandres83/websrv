@@ -52,7 +52,7 @@ class	Config
 		bool	ParseServerBlock(const std::string& content, size_t& index);										//	Server-specific parsing functions.
 		bool	ParseListenDirective(const std::string& content, size_t& index, ServerConfig& server);
 		bool	ParseClientMaxBodySizeDirective(const std::string& content, size_t& index, ServerConfig& server);
-		bool	ParseAllowedMethodsDirective(const std::string& content, size_t& index, ServerConfig& server);
+		
 
 
 		
@@ -64,12 +64,17 @@ class	Config
 		const std::vector<ServerConfig>&	getServerConfigs() const;	//	Getter method to access (read-only) server configurations.
 };
 
+std::string ReadFileToString(const std::string& filename);
+std::string GetNextToken(const std::string& raw_data, size_t& index);;
+
 template <typename ConfigT>																							//	Shared parsing functions.
 bool	ParseRootDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct);
 template <typename ConfigT>
 bool	ParseAutoindexDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct);
 template <typename ConfigT>
 bool	ParseErrorPageDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct);
+template <typename ConfigT>
+bool	ParseAllowedMethodsDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct);
 
 #include "ParserTemplates.tpp"
 

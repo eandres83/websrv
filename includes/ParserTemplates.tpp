@@ -1,4 +1,4 @@
-
+//	TEMPLATE FUNCTIONS FOR PARSING DIRECTIVES SHARED BY SERVER AND LOCATION
 
 template <typename ConfigT>
 bool	ParseAutoindexDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct)
@@ -100,4 +100,36 @@ bool	ParseErrorPageDirectiveT(const std::string& content, size_t& index, ConfigT
 	}
 	server.error_pages[error_code] = path_token;						//	All OK. Populate map.
 	return true;
+}
+
+template <typename ConfigT>
+bool ParseAllowedMethodsDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct)
+{
+	std::string token;
+
+	if (!server.allowed_methods.empty())											//	Validation. "One-and-done"
+	{
+		std::cerr << "Error: Duplicate 'allowed_methods' directive found." << std::endl;
+		return false;
+	}
+	while (!(token = GetNextToken(content, index)).empty())							//	Loop untill ';'
+	{
+		if (token == ";")															//	If end of directive...
+		{
+			if (server.allowed_methods.empty())										//	... at least one valid method must be present
+			{
+				std::cerr << "Error: 'allowed_methods' directive requires at least one verb." << std::endl;
+				return false;
+			}
+			return true;
+		}
+		if (!(token == "GET" || token == "POST" || token == "DELETE"))				//	Validation: Only uppercase.
+		{
+			std::cerr << "Error: Invalid HTTP method '" << token << "' in allowed_methods. Must be GET, POST, or DELETE." << std::endl;
+			return false;
+		}
+		server.allowed_methods.push_back(token);									//	Store valid method into the vector.
+	}
+	std::cerr << "Error: Unexpected EOF while parsing 'allowed_methods' directive (missing ';'?)." << std::endl;
+	return false;
 }

@@ -15,7 +15,7 @@ LOCATION BLOCK
 
 Add parsing helpers to:
 	path
-	allowed_methods
+	allowed_methods		(A template exists)
 	autoindex			(A template exists)
 	index_files
 	return_code
