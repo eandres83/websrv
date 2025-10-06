@@ -11,10 +11,10 @@ Add parsing helpers to:
 	path					DONE
 	allowed_methods			(A template exists) DONE
 	autoindex				(A template exists) DONE
-	index_files				
+	index_files				DONE
 	return_code				CONSULTAR
 	return_url				CONSULTAR
 	root_directory			(A template exists) DONE
-	upload_path
+	upload_path				(A template existe) DONE		***	NO upload_path ELEMENT IN ServerConfig ???? ***
 
 Add Validation: path format

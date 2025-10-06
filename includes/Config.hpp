@@ -12,14 +12,14 @@
 //	Each `location` block in the config file will correspond to an instance of this struct.
 struct	LocationConfig
 {
-	std::string 				path; 				//	This is the URI (Uniform Resource Identifier) path that this location block applies to. E.g., "/" or "/images". 
+	std::string					path;				//	This is the URI (Uniform Resource Identifier) path that this location block applies to. E.g., "/" or "/images". 
 	std::vector<std::string>	allowed_methods; 	//	A list of allowed HTTP methods (called 'verbs' here) for this path. ["GET", "POST", "PUT", "DELETE"]. 
-	bool						autoindex; 			//	'true' if autoindex is 'on' for this location, 'false' if 'off'.
-	std::vector<std::string>	index_files; 		//	List of default files to look for in a directory. E.g., ["index.html", "index.php"].
-	int							return_code; 		//	The HTTP status code for a redirect (e.g., 301 for a permanent redirect).
-	std::string 				return_url;			//	The URL to redirect to if a return code is specified.
+	bool						autoindex;			//	'true' if autoindex is 'on' for this location, 'false' if 'off'.
+	std::vector<std::string>	index_files;		//	List of default files to look for in a directory. E.g., ["index.html", "index.php"].
+	int							return_code;		//	The HTTP status code for a redirect (e.g., 301 for a permanent redirect).
+	std::string					return_url;			//	The URL to redirect to if a return code is specified.
 	std::string					root_directory;		//	A new root directory for this location, which can override the server's root.
-	std::string 				upload_path;		//	A directory for handling file uploads via POST requests, specific to this location.
+	std::string					upload_path;		//	A directory for handling file uploads via POST requests, specific to this location.
 
 	LocationConfig(): autoindex(false), return_code(0) {}	//	A constructor to initialize the default values.
 };
@@ -77,6 +77,8 @@ template <typename ConfigT>
 bool	ParseErrorPageDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct);
 template <typename ConfigT>
 bool	ParseAllowedMethodsDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct);
+template <typename ConfigT>
+bool	ParseUploadPathDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct);
 
 #include "ParserTemplates.tpp"
 

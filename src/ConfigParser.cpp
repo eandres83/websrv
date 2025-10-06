@@ -6,7 +6,7 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/30 13:14:04 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 10:50:33 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/06 11:16:25 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -66,11 +66,14 @@ bool Config::ParseLocationBlock(const std::string& content, size_t& index, Serve
 		}
 		else if (token == "index")
 		{
-			if (!ParseIndexDirective(content, index, current_location))
+			if (!ParseIndexDirective(content, index, current_location))				//	Only location
 				return false;
 		}
-		
-		
+		else if (token == "upload_path")											//	Template
+		{
+			if (!ParseUploadPathDirectiveT(content, index, current_location))
+				return false;
+		}
 		
 
 		else
@@ -130,9 +133,14 @@ bool	Config::ParseServerBlock(const std::string& content, size_t& index)
 			if (!ParseAutoindexDirectiveT(content, index, new_server))	//	Template
 				return false;
 		}
-		else if (token == "upload_path")
+/* 		else if (token == "enable_reuse_addr")
 		{
 			if (!ParseReuseAddrDirective(content, index, new_server))	//	Only server
+				return false;
+		} */
+		else if (token == "upload_path")
+		{
+			if (!ParseUploadPathDirectiveT(content, index, new_server))	//	Template
 				return false;
 		}
 		else

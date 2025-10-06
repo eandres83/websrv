@@ -6,7 +6,7 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/06 10:09:35 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 10:09:40 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/06 11:17:05 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -144,4 +144,48 @@ bool ParseAllowedMethodsDirectiveT(const std::string& content, size_t& index, Co
 	}
 	std::cerr << "Error: Unexpected EOF while parsing 'allowed_methods' directive (missing ';'?)." << std::endl;
 	return false;
+}
+
+/*	Template to parse the 'upload_path path;' directive. Works for ServerConfig
+ * and LocationConfig (ConfigT must have a std::string upload_path). */
+template <typename ConfigT>
+bool ParseUploadPathDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct)
+{
+    std::string token;
+
+    // 1. EXPECT THE VALUE (The Path)
+    token = GetNextToken(content, index);
+
+    if (token.empty())
+    {
+        std::cerr << "Error: Unexpected EOF after 'upload_path' directive." << std::endl;
+        return false;
+    }
+
+    // 2. VALIDATION: Check for duplicate 'upload_path' (One-and-done enforced)
+    if (!config_struct.upload_path.empty())
+    {
+        std::cerr << "Error: Duplicate 'upload_path' directive." << std::endl;
+        return false;
+    }
+
+    // Validation: Path cannot be a standalone semicolon
+    if (token == ";")
+    {
+        std::cerr << "Error: 'upload_path' directive requires a path." << std::endl;
+        return false;
+    }
+
+    // 3. POPULATE STRUCT
+    config_struct.upload_path = token;
+
+    // 4. EXPECT THE SEMICOLON (;)
+    token = GetNextToken(content, index);
+    if (token != ";")
+    {
+        std::cerr << "Error: Expected ';' after 'upload_path' path, found '" << token << "'" << std::endl;
+        return false;
+    }
+
+    return true;
 }
