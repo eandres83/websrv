@@ -6,11 +6,11 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/06 10:12:35 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 12:11:32 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/06 14:03:12 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
-#include "../includes/Config.hpp"
+#include "Config.hpp"
 
 //	FUNCTIONS FOR PARSING LOCATION-SPECIFIC DIRECTIVES
 
@@ -92,6 +92,37 @@ bool Config::ParseReturnCodeDirective(const std::string& content, size_t& index,
 	if (token != ";")
 	{
 		std::cerr << "Error: Expected ';' after return URL, found '" << token << "'" << std::endl;
+		return false;
+	}
+	return true;
+}
+
+/*	Template to parse the 'upload_path path;' directive. */
+bool	Config::ParseUploadPathDirective(const std::string& content, size_t& index, LocationConfig& current_location)
+{
+	std::string	token;
+
+	token = GetNextToken(content, index);				//	Expect path
+	if (token.empty())
+	{
+		std::cerr << "Error: Unexpected EOF after 'upload_path' directive." << std::endl;
+		return false;
+	}
+	if (!current_location.upload_path.empty())				//	One-and-done
+	{
+		std::cerr << "Error: Duplicate 'upload_path' directive." << std::endl;
+		return false;
+	}
+	if (token == ";")									// Validation: Some path required
+	{
+		std::cerr << "Error: 'upload_path' directive requires a path." << std::endl;
+		return false;
+	}
+	current_location.upload_path = token;					//	Populate
+	token = GetNextToken(content, index);
+	if (token != ";")									//	Expect ';'
+	{
+		std::cerr << "Error: Expected ';' after 'upload_path' path, found '" << token << "'" << std::endl;
 		return false;
 	}
 	return true;

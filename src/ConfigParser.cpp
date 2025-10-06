@@ -6,11 +6,21 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/30 13:14:04 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 11:44:45 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/06 15:49:45 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
-#include "../includes/Config.hpp"
+#include "Config.hpp"
+
+Config::Config(){}
+
+Config::~Config(){}
+
+const std::vector<ServerConfig>& Config::getServerConfigs() const
+{
+	return (_server_configs);
+}
+
 
 /*	Parses a single 'location path { ... }' block.
 	Expects to be called immediately AFTER the "location" token has been read.
@@ -53,12 +63,7 @@ bool Config::ParseLocationBlock(const std::string& content, size_t& index, Serve
 			if (!ParseAllowedMethodsDirectiveT(content, index, current_location))	//	Template
 			return false;
 		}
-		else if (token == "error_page")
-		{
-			if (!ParseErrorPageDirectiveT(content, index, current_location))		//	Template
-				return false;
-		}
-		else if (token == "return_code")
+		else if (token == "return")
 		{
 			if (!ParseReturnCodeDirective(content, index, current_location))		//	Only location
 				return false;			
@@ -70,11 +75,9 @@ bool Config::ParseLocationBlock(const std::string& content, size_t& index, Serve
 		}
 		else if (token == "upload_path")											//	Template
 		{
-			if (!ParseUploadPathDirectiveT(content, index, current_location))
+			if (!ParseUploadPathDirective(content, index, current_location))
 				return false;
 		}
-		
-
 		else
 		{
 			std::cerr << "Error: Unknown directive '" << token << "' inside location block." << std::endl;
@@ -124,7 +127,7 @@ bool	Config::ParseServerBlock(const std::string& content, size_t& index)
 		}
 		else if (token == "error_page")
 		{
-			if (!ParseErrorPageDirectiveT(content, index, new_server))	//	Template
+			if (!ParseErrorPageDirective(content, index, new_server))	//	Template
 				return false;
 		}
 		else if (token == "autoindex")
@@ -132,14 +135,19 @@ bool	Config::ParseServerBlock(const std::string& content, size_t& index)
 			if (!ParseAutoindexDirectiveT(content, index, new_server))	//	Template
 				return false;
 		}
-/* 		else if (token == "enable_reuse_addr")
+		else if (token == "enable_reuse_addr")
 		{
 			if (!ParseReuseAddrDirective(content, index, new_server))	//	Only server
 				return false;
-		} */
-		else if (token == "upload_path")
+		}
+		else if (token == "client_max_body_size")
 		{
-			if (!ParseUploadPathDirectiveT(content, index, new_server))	//	Template
+			if (!ParseClientMaxBodySizeDirective(content, index, new_server))	//	Template
+				return false;
+		}
+		else if (token == "allowed_methods")
+		{
+			if (!ParseAllowedMethodsDirectiveT(content, index, new_server))
 				return false;
 		}
 		else

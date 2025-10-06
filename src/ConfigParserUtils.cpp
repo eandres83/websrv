@@ -6,11 +6,11 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/03 10:01:37 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 10:05:39 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/06 13:37:04 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
-#include "../includes/Config.hpp"
+#include "Config.hpp"
 
 /*	Extracts the next valid token from the raw config data (C++98 Safe).
  *	raw_data = The entire configuration file content formatted as a std::string
@@ -60,7 +60,6 @@ std::string ReadFileToString(const std::string& filename)
 {
 	std::stringstream	buffer;
 	std::string			contents;
-	size_t				index;
 	
 	std::ifstream file(filename.c_str(), std::ios::in);					//	.c_str() extracts data from filename as a stream. Guarantees null termination.
 	if (!file.is_open())

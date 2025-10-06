@@ -6,13 +6,61 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/06 10:11:42 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 12:30:03 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/06 13:53:35 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
-#include "../includes/Config.hpp"
+#include "Config.hpp"
 
 //	FUNCTIONS FOR PARSING SERVER-SPECIFIC DIRECTIVES
+
+
+bool	Config::ParseErrorPageDirective(const std::string& content, size_t& index, ServerConfig& server)
+{
+	std::string	code_token;
+	std::string	path_token;
+	std::string	semicolon;
+	int			error_code;
+	
+	code_token = GetNextToken(content, index);								//	Expect error code.
+	if (code_token.empty())
+	{
+		std::cerr << "Error: Unexpected EOF after 'error_page' directive." << std::endl;
+		return false;
+	}
+	std::istringstream code_ss(code_token);									// Convert code string to int
+	code_ss >> error_code;
+	if (code_ss.fail() || error_code < 300 || error_code > 599)				// Validation: Check conversion and range.
+	{    
+		std::cerr << "Error: Invalid or out-of-range error code '" << code_token << "'." << std::endl;
+		return false;
+	}
+	path_token = GetNextToken(content, index);								//	Expect path.
+	if (path_token.empty())													//	Validation: EOF
+	{
+		std::cerr << "Error: Unexpected EOF after error code (missing path)." << std::endl;
+		return false;
+	}
+	if (path_token == ";")													//	Validation: Path is not ';'.
+	{
+		std::cerr << "Error: 'error_page' path is missing." << std::endl;
+		return false;
+	}
+	if (server.error_pages.find(error_code) != server.error_pages.end())	//	Validation: Method .find() from map container to check double entries
+	{
+		std::cerr << "Error: Duplicate 'error_page' entry for code " << error_code << "." << std::endl;
+		return false;
+	}
+	semicolon = GetNextToken(content, index);								//	Expect ';'
+	if (semicolon != ";")
+	{
+		std::cerr << "Error: Expected ';' after error path, found '" << semicolon << "'" << std::endl;
+		return false;
+	}
+	server.error_pages[error_code] = path_token;							//	All OK. Populate map.
+	return true;
+}
+
 
 /*	Parses the 'reuse_addr on|off;' directive and sets the boolean flag. By default it is 'off'. */
 bool Config::ParseReuseAddrDirective(const std::string& content, size_t& index, ServerConfig& server)

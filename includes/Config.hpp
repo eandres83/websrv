@@ -38,7 +38,7 @@ struct	ServerConfig
 	std::map<int, std::string>	error_pages;			//	A map to store custom error pages (e.g., key 404 maps to value "./www/404.html").
 	std::vector<LocationConfig>	locations;				//	A vector to store all the `LocationConfig` objects for this server.	
 
-	ServerConfig(): autoindex(false), client_max_body_size(1048576), enable_reuse_addr(false) {}	//	A constructor to set defaults: autoindex, client_max_body_size, enable_reuse_addr.
+	ServerConfig(): port(0), enable_reuse_addr(false), autoindex(false), client_max_body_size(1048576) {}	//	A constructor to set defaults: autoindex, client_max_body_size, enable_reuse_addr.
 };
 
 //	The main class that will manage all the server configurations.
@@ -53,9 +53,13 @@ class	Config
 		bool	ParseListenDirective(const std::string& content, size_t& index, ServerConfig& server);
 		bool	ParseClientMaxBodySizeDirective(const std::string& content, size_t& index, ServerConfig& server);
 		bool	ParseReuseAddrDirective(const std::string& content, size_t& index, ServerConfig& server);
+		bool	ParseErrorPageDirective(const std::string& content, size_t& index, ServerConfig& server);
+
 
 		bool	ParseReturnCodeDirective(const std::string& content, size_t& index, LocationConfig& current_location);		//	Location-specific parsing functions
 		bool	ParseIndexDirective(const std::string& content, size_t& index, LocationConfig& current_location);
+		bool	ParseUploadPathDirective(const std::string& content, size_t& index, LocationConfig& current_location);
+
 
 
 	public:
@@ -74,11 +78,7 @@ bool	ParseRootDirectiveT(const std::string& content, size_t& index, ConfigT& con
 template <typename ConfigT>
 bool	ParseAutoindexDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct);
 template <typename ConfigT>
-bool	ParseErrorPageDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct);
-template <typename ConfigT>
 bool	ParseAllowedMethodsDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct);
-template <typename ConfigT>
-bool	ParseUploadPathDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct);
 
 #include "ParserTemplates.tpp"
 

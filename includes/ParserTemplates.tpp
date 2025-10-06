@@ -6,11 +6,13 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/06 10:09:35 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 12:06:46 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/06 13:49:19 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
 //	TEMPLATE FUNCTIONS FOR PARSING DIRECTIVES SHARED BOTH BY SERVER AND LOCATION
+
+#include <string>
 
 template <typename ConfigT>
 bool	ParseAutoindexDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct)
@@ -24,9 +26,9 @@ bool	ParseAutoindexDirectiveT(const std::string& content, size_t& index, ConfigT
 		return false;
 	}
 	if (token == "on")
-		server.autoindex = true;
+		config_struct.autoindex = true;
 	else if(token == "off")
-		server.autoindex = false;
+		config_struct.autoindex = false;
 	else
 	{
 		std::cerr << "Error: Expected 'on' or 'off' after 'autoindex' directive. Found '" << token << "'" << std::endl;
@@ -52,12 +54,12 @@ bool	ParseRootDirectiveT(const std::string& content, size_t& index, ConfigT& con
 		std::cerr << "Error: Unexpected EOF after 'root' directive." << std::endl;
 		return false;
 	}
-	if (!server.root_directory.empty())									//	Validation: Check if root already set.
+	if (!config_struct.root_directory.empty())									//	Validation: Check if root already set.
 	{
 		std::cerr << "Error: Duplicate 'root' directive." << std::endl;
 		return false;
 	}
-	server.root_directory = token;										//	Populate struct. No need for conversion since 'token' is already a string.
+	config_struct.root_directory = token;										//	Populate struct. No need for conversion since 'token' is already a string.
 	token = GetNextToken(content, index);								//	Expect ';'
 	if (token != ";")
 	{
@@ -68,58 +70,11 @@ bool	ParseRootDirectiveT(const std::string& content, size_t& index, ConfigT& con
 }
 
 template <typename ConfigT>
-bool	ParseErrorPageDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct)
-{
-	std::string	code_token;
-	std::string	path_token;
-	std::string	semicolon;
-	int			error_code;
-	
-	code_token = GetNextToken(content, index);								//	Expect error code.
-	if (code_token.empty())
-	{
-		std::cerr << "Error: Unexpected EOF after 'error_page' directive." << std::endl;
-		return false;
-	}
-	std::istringstream code_ss(code_token);									// Convert code string to int
-	code_ss >> error_code;
-	if (code_ss.fail() || error_code < 300 || error_code > 599)				// Validation: Check conversion and range.
-	{    
-		std::cerr << "Error: Invalid or out-of-range error code '" << code_token << "'." << std::endl;
-		return false;
-	}
-	path_token = GetNextToken(content, index);								//	Expect path.
-	if (path_token.empty())													//	Validation: EOF
-	{
-		std::cerr << "Error: Unexpected EOF after error code (missing path)." << std::endl;
-		return false;
-	}
-	if (path_token == ";")													//	Validation: Path is not ';'.
-	{
-		std::cerr << "Error: 'error_page' path is missing." << std::endl;
-		return false;
-	}
-	if (server.error_pages.find(error_code) != server.error_pages.end())	//	Validation: Method .find() from map container to check double entries
-	{
-		std::cerr << "Error: Duplicate 'error_page' entry for code " << error_code << "." << std::endl;
-		return false;
-	}
-	semicolon = GetNextToken(content, index);								//	Expect ';'
-	if (semicolon != ";")
-	{
-		std::cerr << "Error: Expected ';' after error path, found '" << semicolon << "'" << std::endl;
-		return false;
-	}
-	server.error_pages[error_code] = path_token;							//	All OK. Populate map.
-	return true;
-}
-
-template <typename ConfigT>
 bool	ParseAllowedMethodsDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct)
 {
 	std::string token;
 
-	if (!server.allowed_methods.empty())											//	Validation. "One-and-done"
+	if (!config_struct.allowed_methods.empty())											//	Validation. "One-and-done"
 	{
 		std::cerr << "Error: Duplicate 'allowed_methods' directive found." << std::endl;
 		return false;
@@ -128,7 +83,7 @@ bool	ParseAllowedMethodsDirectiveT(const std::string& content, size_t& index, Co
 	{
 		if (token == ";")															//	If end of directive...
 		{
-			if (server.allowed_methods.empty())										//	... at least one valid method must be present
+			if (config_struct.allowed_methods.empty())										//	... at least one valid method must be present
 			{
 				std::cerr << "Error: 'allowed_methods' directive requires at least one verb." << std::endl;
 				return false;
@@ -140,41 +95,8 @@ bool	ParseAllowedMethodsDirectiveT(const std::string& content, size_t& index, Co
 			std::cerr << "Error: Invalid HTTP method '" << token << "' in allowed_methods. Must be GET, POST, or DELETE." << std::endl;
 			return false;
 		}
-		server.allowed_methods.push_back(token);									//	Store valid method into the vector.
+		config_struct.allowed_methods.push_back(token);									//	Store valid method into the vector.
 	}
 	std::cerr << "Error: Unexpected EOF while parsing 'allowed_methods' directive (missing ';'?)." << std::endl;
 	return false;
-}
-
-/*	Template to parse the 'upload_path path;' directive. Works for ServerConfig
- * and LocationConfig (ConfigT must have a std::string upload_path). */
-template <typename ConfigT>
-bool	ParseUploadPathDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct)
-{
-	std::string	token;
-
-	token = GetNextToken(content, index);				//	Expect path
-	if (token.empty())
-	{
-		std::cerr << "Error: Unexpected EOF after 'upload_path' directive." << std::endl;
-		return false;
-	}
-	if (!config_struct.upload_path.empty())				//	One-and-done
-	{
-		std::cerr << "Error: Duplicate 'upload_path' directive." << std::endl;
-		return false;
-	}
-	if (token == ";")									// Validation: Some path required
-	{
-		std::cerr << "Error: 'upload_path' directive requires a path." << std::endl;
-		return false;
-	}
-	config_struct.upload_path = token;					//	Populate
-	token = GetNextToken(content, index);
-	if (token != ";")									//	Expect ';'
-	{
-		std::cerr << "Error: Expected ';' after 'upload_path' path, found '" << token << "'" << std::endl;
-		return false;
-	}
-	return true;
 }

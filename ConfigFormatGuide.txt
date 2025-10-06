@@ -2,8 +2,8 @@
 
 
 
-	DIRECTIVE		|		VALUE			|		ENFORCEMENT
-					|						|
+	DIRECTIVE			|		VALUE			|		ENFORCEMENT
+						|						|
 server
 {
 	listen 					<PORT>					One-and-done
@@ -12,8 +12,8 @@ server
 	autoindex				<on|off>				Last-seen-wins
 	upload_path				<URL>					One-and-done
 	allowed_methods			<GET|POST|DELETE>		One-and-done
-	client_max_body_size	<SIZE&UNIT>				One-and-done
-	enable_reuse_addr		<true|false>			Last_seen-wins
+	client_max_body_size	<SIZE&UNIT>				One-and-done	Note: Units are 'k', 'm', or 'g'. Mays accepted.
+	enable_reuse_addr		<on|off>				Last_seen-wins
 									
 	location 				<PATH>
 	{
