@@ -18,7 +18,7 @@
 // #include "Client.hpp"
 #include "Config.hpp"
 #include "Response.hpp"
-#include "Colors.hpp"
+#include "Logger.hpp"
 
 class User {
     private:

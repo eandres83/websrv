@@ -21,7 +21,6 @@ extern int g_epoll_fd;
 #include "Client.hpp"
 #include "Config.hpp"
 #include "Response.hpp"
-#include "Colors.hpp"
 #include "User.hpp"
 
 #define MAX_FDS 200

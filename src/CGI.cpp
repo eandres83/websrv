@@ -1,18 +1,8 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   CGI.cpp                                            :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: nquecedo <nquecedo@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/09/10 18:14:25 by nquecedo          #+#    #+#             */
-/*   Updated: 2025/09/22 19:51:43 by nquecedo         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "../includes/CGI.hpp"
 #include "../includes/Logger.hpp"
 #include <fcntl.h>
+
+volatile sig_atomic_t g_shutdown_flag = 0;
 
 std::vector<char *> setEnv(Client &client)
 {
@@ -98,7 +88,7 @@ int manageCGI(Client &client, Response &response)
         // Para POST, enviar el cuerpo al stdin del CGI
         if (request.getMethod() == "POST")
         {
-            const std::string &body = request.getBody(); // -> [`Request::getBody`](src/Request.cpp)
+            const std::string &body = request.getBody();
             size_t total = 0;
             while (total < body.size())
             {
@@ -124,9 +114,21 @@ int manageCGI(Client &client, Response &response)
         ev.data.fd = pipe_out[0];
         epoll_ctl(g_epoll_fd, EPOLL_CTL_ADD, pipe_out[0], &ev);
 
-        client.setCGIContext(pid, -1, pipe_out[0]); // -> [`Client::setCGIContext`](includes/Client.hpp)
-        client.setState(CGI_RUNNING);               // -> [`Client::setState`](includes/Client.hpp)
+        client.setCGIContext(pid, -1, pipe_out[0]);
+        client.setState(CGI_RUNNING);
         return 0;
     }
     return -1;
+}
+
+void signalHandler(int signum)
+{
+    (void)signum;
+    g_shutdown_flag = 1;
+}
+
+void setupSignalHandler()
+{
+    signal(SIGINT, signalHandler);
+    signal(SIGTERM, signalHandler);
 }

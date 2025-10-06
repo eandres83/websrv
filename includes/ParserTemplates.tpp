@@ -1,15 +1,3 @@
-/******************************************************************************/
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ParserTemplates.tpp                                :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/10/06 10:09:35 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 13:49:19 by igchurru         ###   ########.fr       */
-/*                                                                            */
-/******************************************************************************/
-
 //	TEMPLATE FUNCTIONS FOR PARSING DIRECTIVES SHARED BOTH BY SERVER AND LOCATION
 
 #include <string>

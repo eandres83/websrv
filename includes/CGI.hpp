@@ -1,5 +1,4 @@
 #include "Server.hpp"
-#include "Colors.hpp"
 #include "Client.hpp"
 #include "Response.hpp"
 #include "MethodHandler.hpp"
@@ -20,6 +19,12 @@
 
 #ifndef CGI_HPP
 #define CGI_HPP
+
+extern volatile sig_atomic_t g_shutdown_flag;
+
+void signalHandler(int signum);
+
+void setupSignalHandler();
 
 int manageCGI(Client &client, Response &response);
 

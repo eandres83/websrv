@@ -1,6 +1,7 @@
 #include "../includes/Server.hpp"
 #include "../includes/Config.hpp"
 #include "../includes/Logger.hpp"
+#include "../includes/CGI.hpp"
 
 int main(int argc, char **argv)
 {
@@ -9,6 +10,8 @@ int main(int argc, char **argv)
 		Logger::log(FATAL, "Uso: " + std::string(argv[0]) + " <archivo_de_configuracion>");
 		return (1);
 	}
+
+	setupSignalHandler();
 
 	Config config;
 	if (!config.parse(argv[1]))

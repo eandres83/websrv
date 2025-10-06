@@ -1,15 +1,3 @@
-/******************************************************************************/
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ConfigParser_Server.cpp                            :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/10/06 10:11:42 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 16:41:36 by igchurru         ###   ########.fr       */
-/*                                                                            */
-/******************************************************************************/
-
 #include "../includes/Config.hpp"
 
 bool	Config::ParseErrorPageDirective(const std::string& content, size_t& index, ServerConfig& server)

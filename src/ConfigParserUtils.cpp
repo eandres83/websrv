@@ -1,15 +1,3 @@
-/******************************************************************************/
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ConfigParserUtils.cpp                              :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/10/03 10:01:37 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 16:38:54 by igchurru         ###   ########.fr       */
-/*                                                                            */
-/******************************************************************************/
-
 #include "../includes/Config.hpp"
 
 /*	Extracts the next valid token from the raw config data (C++98 Safe).

@@ -2,6 +2,7 @@
 #include "../includes/Request.hpp"
 #include "../includes/RequestHandler.hpp"
 #include "../includes/Logger.hpp"
+#include "../includes/CGI.hpp"
 #include <errno.h>
 #include <sys/wait.h>
 
@@ -88,7 +89,12 @@ void Server::run()
 		// epoll_wait bloquea hasta que ocurra un evento en los sockets monitorizados
 		int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
 		if (nfds == -1)
+		{
+			if (g_shutdown_flag)
+				break ;
 			throw std::runtime_error("Error fatal: epoll_wait");
+		}
+			
 		for (int i = 0; i < nfds; ++i)
 		{
 			int current_fd = events[i].data.fd;
@@ -136,6 +142,10 @@ void Server::run()
 			// Si está en CGI_RUNNING, no hacemos nada aquí; lo gestionará handleCGIEvent cuando llegue EPOLLIN al pipe.
 		}
 	}
+	for (size_t i = 0; i < _listenSockets.size(); ++i)
+	close(_listenSockets[i]);
+	close(epoll_fd);
+	Logger::log(INFO, "Server shutting down gracefully.");
 }
 
 void Server::acceptNewConnection(int listener_fd, int epoll_fd)
