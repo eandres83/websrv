@@ -6,25 +6,13 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/06 10:12:35 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 11:35:25 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/06 12:11:32 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
 #include "../includes/Config.hpp"
 
 //	FUNCTIONS FOR PARSING LOCATION-SPECIFIC DIRECTIVES
-
-
-//	CONSULTAR: UN ÚNICO RETURN CODE POR LOCATION? SI PUEDE HABER VARIOS SERÍA CLARAMENTE MEJOR UN MAP. Habría que cambiar la Config class.
-bool Config::ParseReturnCodeDirective(const std::string& content, size_t& index, LocationConfig& current_location)
-{
-	std::string	token;
-	int			code;
-
-	token = GetNextToken(content, index);			//	Expect code
-	std::stringstream ss(token);					//	Get into stream
-	ss >> code;										//	Insert into int
-}	
 
 /*	Parses the 'index file1 file2 ... ;' directive. */
 bool Config::ParseIndexDirective(const std::string& content, size_t& index, LocationConfig& current_location)

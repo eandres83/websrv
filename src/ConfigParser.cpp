@@ -6,16 +6,15 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/30 13:14:04 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 11:16:25 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/06 11:44:45 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
 #include "../includes/Config.hpp"
 
-
 /*	Parses a single 'location path { ... }' block.
-	Expects to be called immediately AFTER the "location" token has been read
-	return true if the block was successfully parsed, false on syntax error. */
+	Expects to be called immediately AFTER the "location" token has been read.
+	Return true if the block was successfully parsed, false on syntax error. */
 bool Config::ParseLocationBlock(const std::string& content, size_t& index, ServerConfig& server)
 {
 	LocationConfig 	current_location;

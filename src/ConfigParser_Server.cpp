@@ -6,7 +6,7 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/06 10:11:42 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 10:13:36 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/06 12:30:03 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -25,11 +25,6 @@ bool Config::ParseReuseAddrDirective(const std::string& content, size_t& index, 
 		std::cerr << "Error: Unexpected EOF after 'reuse_addr' directive." << std::endl;
 		return false;
 	}
-	if (server.enable_reuse_addr != false) 											//	Validation: No duplicates. This is tricky for booleans.
-	{
-		std::cerr << "Error: Duplicate 'reuse_addr' directive found." << std::endl;
-		return false;
-	}   
 	if (token == "on")																// Validate and assign.
 		server.enable_reuse_addr = true;
 	else if(token == "off")
