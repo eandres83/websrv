@@ -35,10 +35,10 @@ class User {
 
         //Geters
         unsigned int getId() const;
-        unsigned int getTimesConected();
+        unsigned int getTimesConected() const;
         std::string getName() const;
-        std::string getPasword();
-        std::string getEmail();
+        std::string getPasword() const;
+        std::string getEmail() const;
 
         //Seters
         void incriseTimesConected();

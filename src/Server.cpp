@@ -411,6 +411,11 @@ const std::map<unsigned int, User>& Server::getRegisteredUsersRef() const {
     return _registered_users;
 }
 
+std::map<unsigned int, User>& Server::getRegisteredUsersRefNoConst()  {
+    return _registered_users;
+}
+
+
 const User* Server::findUserByName(const std::string& name) const {
     for (std::map<unsigned int, User>::const_iterator it = _registered_users.begin(); it != _registered_users.end(); ++it) {
         if (it->second.getName() == name)
