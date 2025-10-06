@@ -1,3 +1,15 @@
+/******************************************************************************/
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ParserTemplates.tpp                                :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/10/06 10:09:35 by igchurru          #+#    #+#             */
+/*   Updated: 2025/10/06 10:09:40 by igchurru         ###   ########.fr       */
+/*                                                                            */
+/******************************************************************************/
+
 //	TEMPLATE FUNCTIONS FOR PARSING DIRECTIVES SHARED BOTH BY SERVER AND LOCATION
 
 template <typename ConfigT>

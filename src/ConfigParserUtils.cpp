@@ -6,7 +6,7 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/03 10:01:37 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/03 10:04:16 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/06 10:05:39 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -70,6 +70,6 @@ std::string ReadFileToString(const std::string& filename)
 	}
 	buffer << file.rdbuf();												//	Store the whole stream in a buffer...
 	file.close();														//	close the file to avoid leaking...
-	contents = buffer.str();											//	then convert the buffer to a string.
-	return contents;
+	contents = buffer.str();											//	then convert the buffer to a string...
+	return contents;													//	and simply return it.
 }
