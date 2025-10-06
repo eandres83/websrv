@@ -1,15 +1,7 @@
 #include "../includes/Config.hpp"
 
-Config::Config()
-{
-}
-
-Config::~Config()
-{
-}
-
 // Por ahora, solo establece un puerto por defecto para que el servidor arranque
-bool Config::parse(const char* filename)
+/* bool Config::parse(const char* filename)
 {
 	(void)filename;
 	ServerConfig defaultConfig;
@@ -84,12 +76,8 @@ bool Config::parse(const char* filename)
 	
 //	_server_configs.push_back(server2_config);
 	return (true);
-}
+} */
 
-const std::vector<ServerConfig>& Config::getServerConfigs() const
-{
-	return (_server_configs);
-}
 
 //int Config::getPort() const
 //{

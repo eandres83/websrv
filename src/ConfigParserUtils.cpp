@@ -10,7 +10,7 @@
 /*                                                                            */
 /******************************************************************************/
 
-#include "Config.hpp"
+#include "../includes/Config.hpp"
 
 /*	Extracts the next valid token from the raw config data (C++98 Safe).
  *	returns: Next token as a std::string. Empty string when the end is reached. */
@@ -62,7 +62,6 @@ std::string ReadFileToString(const std::string& filename)
 	std::ifstream file(filename.c_str(), std::ios::in);					//	.c_str() extracts data from filename as a stream. Guarantees null termination.
 	if (!file.is_open())
 	{
-		std::cerr << "Error: Cannot open configuration file" << std::endl;
 		return "";
 	}
 	buffer << file.rdbuf();												//	Store the whole stream in a buffer...

@@ -10,7 +10,7 @@
 /*                                                                            */
 /******************************************************************************/
 
-#include "Config.hpp"
+#include "../includes/Config.hpp"
 
 bool	Config::ParseErrorPageDirective(const std::string& content, size_t& index, ServerConfig& server)
 {

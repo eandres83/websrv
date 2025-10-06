@@ -9,7 +9,6 @@ OBJ_DIR = ./objects/
 
 SRC = src/Server.cpp \
 	src/Request.cpp \
-	src/Config.cpp \
 	src/DirectoryHandler.cpp \
 	src/main.cpp \
 	src/Client.cpp \
@@ -19,6 +18,10 @@ SRC = src/Server.cpp \
 	src/Logger.cpp \
 	src/CGI.cpp \
 	src/User.cpp \
+	src/ConfigParserLocation.cpp \
+	src/ConfigParserServer.cpp \
+	src/ConfigParserUtils.cpp \
+	src/ConfigParser.cpp
 
 OBJS = $(SRC:$(SRC_DIR)%.cpp=$(OBJ_DIR)%.o)
 
