@@ -1,5 +1,0 @@
-CGI
-Parse configuration file
-
-//
-
