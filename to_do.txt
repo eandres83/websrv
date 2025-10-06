@@ -1,11 +1,4 @@
 
-SERVER BLOCK
-
-Add parsing helpers to:
-	locations --> THIS ONE LAST
-
-
-
 ********************************
 
 
@@ -15,13 +8,13 @@ LOCATION BLOCK
 
 
 Add parsing helpers to:
-	path
-	allowed_methods		(A template exists) DONE
-	autoindex			(A template exists) DONE
-	index_files
-	return_code
-	return_url
-	root_directory		(A template exists) DONE
+	path					DONE
+	allowed_methods			(A template exists) DONE
+	autoindex				(A template exists) DONE
+	index_files				
+	return_code				CONSULTAR
+	return_url				CONSULTAR
+	root_directory			(A template exists) DONE
 	upload_path
 
 Add Validation: path format

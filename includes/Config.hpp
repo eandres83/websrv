@@ -54,6 +54,10 @@ class	Config
 		bool	ParseClientMaxBodySizeDirective(const std::string& content, size_t& index, ServerConfig& server);
 		bool	ParseReuseAddrDirective(const std::string& content, size_t& index, ServerConfig& server);
 
+		bool	ParseReturnCodeDirective(const std::string& content, size_t& index, LocationConfig& current_location);		//	Location-specific parsing functions
+		bool	ParseIndexDirective(const std::string& content, size_t& index, LocationConfig& current_location);
+
+
 	public:
 		Config(); 										// Default constructor.
 		~Config(); 										// Destructor.
@@ -62,10 +66,10 @@ class	Config
 		const std::vector<ServerConfig>&	getServerConfigs() const;		//	Getter method to access (read-only) server configurations.
 };
 
-std::string ReadFileToString(const std::string& filename);															//	Some parsing helpers...
+std::string ReadFileToString(const std::string& filename);												//	Some parsing helpers...
 std::string GetNextToken(const std::string& raw_data, size_t& index);;
 
-template <typename ConfigT>																							//	Server and Location parsing shared functions.
+template <typename ConfigT>																				//	Server and Location parsing shared function templates.
 bool	ParseRootDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct);
 template <typename ConfigT>
 bool	ParseAutoindexDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct);

@@ -6,7 +6,7 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/30 13:14:04 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 10:17:32 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/06 10:50:33 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -21,14 +21,14 @@ bool Config::ParseLocationBlock(const std::string& content, size_t& index, Serve
 	LocationConfig 	current_location;
 	std::string		token;
 
-	token = GetNextToken(content, index);						// Expect path.
+	token = GetNextToken(content, index);						//	Expect path.
 	if (token.empty() || token == "{")
 	{
 		std::cerr << "Error: Expected path after 'location' directive." << std::endl;
 		return false;
 	}
 	// TODO: Add validation for path format
-	current_location.path = token;								// Store path
+	current_location.path = token;								//	Store path
 	token = GetNextToken(content, index);						//	Expect '{'
 	if (token != "{")
 	{
@@ -41,20 +41,38 @@ bool Config::ParseLocationBlock(const std::string& content, size_t& index, Serve
 			break; 
 		else if (token == "root")
 		{
-			if (!ParseRootDirectiveT(content, index, current_location)) 
+			if (!ParseRootDirectiveT(content, index, current_location))				//	Template
 				return false;
 		}
 		else if (token == "autoindex")
 		{
-			if (!ParseAutoindexDirectiveT(content, index, current_location)) 
+			if (!ParseAutoindexDirectiveT(content, index, current_location))		//	Template
 				return false;
 		}
 		else if (token == "allowed_methods")
 		{
-			if (!ParseAllowedMethodsDirectiveT(content, index, current_location)) 
+			if (!ParseAllowedMethodsDirectiveT(content, index, current_location))	//	Template
 			return false;
 		}
-		// TODO: Add location-specific directives like 'index', 'return', etc.)
+		else if (token == "error_page")
+		{
+			if (!ParseErrorPageDirectiveT(content, index, current_location))		//	Template
+				return false;
+		}
+		else if (token == "return_code")
+		{
+			if (!ParseReturnCodeDirective(content, index, current_location))		//	Only location
+				return false;			
+		}
+		else if (token == "index")
+		{
+			if (!ParseIndexDirective(content, index, current_location))
+				return false;
+		}
+		
+		
+		
+
 		else
 		{
 			std::cerr << "Error: Unknown directive '" << token << "' inside location block." << std::endl;
