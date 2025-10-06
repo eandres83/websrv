@@ -6,20 +6,18 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/06 10:12:35 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 14:03:12 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/06 16:41:14 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
-#include "Config.hpp"
+#include "../includes/Config.hpp"
 
-//	FUNCTIONS FOR PARSING LOCATION-SPECIFIC DIRECTIVES
-
-/*	Parses the 'index file1 file2 ... ;' directive. */
+/*	Parses the 'index <file1> <file2> ... ;' directive. */
 bool Config::ParseIndexDirective(const std::string& content, size_t& index, LocationConfig& current_location)
 {
 	std::string token;
 
-	if (!current_location.index_files.empty())		//	Validation: One-and-done
+	if (!current_location.index_files.empty())					//	Validation: One-and-done
 	{
 		std::cerr << "Error: Duplicate 'index' directive found in location block." << std::endl;
 		return false;
@@ -45,11 +43,6 @@ bool Config::ParseIndexDirective(const std::string& content, size_t& index, Loca
 	std::cerr << "Error: Unexpected EOF while parsing 'index' directive (missing ';'?)." << std::endl;   	//	If loop exited because GetNextToken returned empty, it means EOF.
 	return false;
 }
-
-#include "../includes/Config.hpp"
-#include <iostream>
-#include <string>
-#include <sstream>
 
 /*	Parses the 'return <CODE> <URL>;' directive and stores the redirect information. */
 bool Config::ParseReturnCodeDirective(const std::string& content, size_t& index, LocationConfig& current_location)
@@ -97,7 +90,7 @@ bool Config::ParseReturnCodeDirective(const std::string& content, size_t& index,
 	return true;
 }
 
-/*	Template to parse the 'upload_path path;' directive. */
+/*	Parse the 'upload_path <path>;' directive. */
 bool	Config::ParseUploadPathDirective(const std::string& content, size_t& index, LocationConfig& current_location)
 {
 	std::string	token;

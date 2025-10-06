@@ -6,15 +6,13 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/03 10:01:37 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 13:37:04 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/06 16:38:54 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
 #include "Config.hpp"
 
 /*	Extracts the next valid token from the raw config data (C++98 Safe).
- *	raw_data = The entire configuration file content formatted as a std::string
- *	index = A reference to the current position in raw_data.
  *	returns: Next token as a std::string. Empty string when the end is reached. */
 std::string GetNextToken(const std::string& raw_data, size_t& index)
 {

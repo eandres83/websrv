@@ -6,7 +6,7 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/30 13:14:04 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 15:49:45 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/06 16:38:26 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
@@ -21,10 +21,7 @@ const std::vector<ServerConfig>& Config::getServerConfigs() const
 	return (_server_configs);
 }
 
-
-/*	Parses a single 'location path { ... }' block.
-	Expects to be called immediately AFTER the "location" token has been read.
-	Return true if the block was successfully parsed, false on syntax error. */
+/*	Parses a single 'location path { ... }' block. */
 bool Config::ParseLocationBlock(const std::string& content, size_t& index, ServerConfig& server)
 {
 	LocationConfig 	current_location;
@@ -36,7 +33,6 @@ bool Config::ParseLocationBlock(const std::string& content, size_t& index, Serve
 		std::cerr << "Error: Expected path after 'location' directive." << std::endl;
 		return false;
 	}
-	// TODO: Add validation for path format
 	current_location.path = token;								//	Store path
 	token = GetNextToken(content, index);						//	Expect '{'
 	if (token != "{")
@@ -180,8 +176,5 @@ bool	Config::parse(const char* filename)
 			return false;
 		}
 	}
-	
-		// ... (Final validation, e.g., checking for unique ports)
-	
 	return true;
 }

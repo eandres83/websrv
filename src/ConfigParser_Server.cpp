@@ -6,14 +6,11 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/06 10:11:42 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 13:53:35 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/06 16:41:36 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
 #include "Config.hpp"
-
-//	FUNCTIONS FOR PARSING SERVER-SPECIFIC DIRECTIVES
-
 
 bool	Config::ParseErrorPageDirective(const std::string& content, size_t& index, ServerConfig& server)
 {
@@ -143,8 +140,7 @@ bool Config::ParseClientMaxBodySizeDirective(const std::string& content, size_t&
 	return true;
 }
 
-/*	Parses the 'listen' directive and handles errors.
- *	server: The ServerConfig struct being populated.  */
+/*	Parses the 'listen <port>' directive and handles errors. */
 bool Config::ParseListenDirective(const std::string& content, size_t& index, ServerConfig& server)
 {
     std::string	token;
