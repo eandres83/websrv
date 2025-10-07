@@ -6,11 +6,11 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/06 10:11:42 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 16:41:36 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/07 11:08:08 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
-#include "Config.hpp"
+#include "../includes/Config.hpp"
 
 bool	Config::ParseErrorPageDirective(const std::string& content, size_t& index, ServerConfig& server)
 {
@@ -88,12 +88,11 @@ bool Config::ParseReuseAddrDirective(const std::string& content, size_t& index, 
 	return true;    
 }
 
-/*	Parses 'client_max_body_size N[unit];' and converts it to bytes. */
+/*	Parses 'client_max_body_size [long long bytes]; */
 bool Config::ParseClientMaxBodySizeDirective(const std::string& content, size_t& index, ServerConfig& server)
 {
 	std::string token;
 	long long value = 0;
-	char unit = 0;
 
 	if (server.client_max_body_size != 1048576)						//	Validation: Check duplicates against the constructor default.
 	{
@@ -106,28 +105,11 @@ bool Config::ParseClientMaxBodySizeDirective(const std::string& content, size_t&
 		std::cerr << "Error: Unexpected EOF after 'client_max_body_size' directive." << std::endl;
 		return false;
 	}
-	std::string num_part = token;									//	Extract value and unit.
-	if (token.length() > 0 && std::isalpha(token[token.length() - 1]))
-	{
-		unit = std::tolower(token[token.length() - 1]);				//	Separate unit
-		num_part = token.substr(0, token.length() - 1);
-	}
-	std::istringstream ss(num_part);   								//	Convert numeric part using stringstream
+	std::istringstream ss(token);   								//	Convert to long long using stringstream
 	ss >> value;
 	if (ss.fail() || value < 0)										//	Validation: Check conversion or negative
 	{
 		std::cerr << "Error: Invalid size value '" << token << "' in client_max_body_size." << std::endl;
-		return false;
-	}
-	if (unit == 'k')												// Multiply based on unit.
-		value *= 1024;
-	else if (unit == 'm')
-		value *= 1024 * 1024;
-	else if (unit == 'g')
-		value *= 1024 * 1024 * 1024;
-	else if (unit != 0)												//	Invalid unit found
-	{
-		std::cerr << "Error: Invalid unit '" << unit << "' in client_max_body_size. Expected k, m, or g." << std::endl;
 		return false;
 	}
 	server.client_max_body_size = value;							//	Populate

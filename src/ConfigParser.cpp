@@ -6,11 +6,11 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/30 13:14:04 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 16:38:26 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/07 11:07:07 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
-#include "Config.hpp"
+#include "../includes/Config.hpp"
 
 Config::Config(){}
 

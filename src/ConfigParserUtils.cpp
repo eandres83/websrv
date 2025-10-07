@@ -6,11 +6,11 @@
 /*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/03 10:01:37 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 16:38:54 by igchurru         ###   ########.fr       */
+/*   Updated: 2025/10/07 11:07:20 by igchurru         ###   ########.fr       */
 /*                                                                            */
 /******************************************************************************/
 
-#include "Config.hpp"
+#include "../includes/Config.hpp"
 
 /*	Extracts the next valid token from the raw config data (C++98 Safe).
  *	returns: Next token as a std::string. Empty string when the end is reached. */
