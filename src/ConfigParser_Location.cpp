@@ -1,4 +1,4 @@
-#include "Config.hpp"
+#include "../includes/Config.hpp"
 
 /*	Parses the 'index <file1> <file2> ... ;' directive. */
 bool Config::ParseIndexDirective(const std::string& content, size_t& index, LocationConfig& current_location)

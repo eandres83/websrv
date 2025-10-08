@@ -1,4 +1,4 @@
-#include "Config.hpp"
+#include "../includes/Config.hpp"
 
 /*	Parses the 'reuse_addr on|off;' directive and sets the boolean flag. By default it is 'off'. */
 bool Config::ParseReuseAddrDirective(const std::string& content, size_t& index, ServerConfig& server)

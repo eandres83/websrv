@@ -1,4 +1,4 @@
-#include "Config.hpp"
+#include "../includes/Config.hpp"
 
 
 /* Creates a default location for the server if none is specified in the configuration file */
