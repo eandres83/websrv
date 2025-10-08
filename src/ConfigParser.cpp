@@ -60,8 +60,14 @@ bool Config::ParseLocationBlock(const std::string& content, size_t& index, Serve
 		else if (token == "upload_path")											//	Template
 		{
 			if (!ParseUploadPathDirective(content, index, current_location))
-				return (false);
+				return false;
 		}
+		else if (token == "error_page")
+		{
+			if (!ParseErrorPageDirectiveT(content, index, current_location))
+				return false;
+		}
+		
 		else
 		{
 			std::cerr << "Error: Unknown directive '" << token << "' inside location block." << std::endl;
@@ -91,13 +97,16 @@ bool	Config::ParseServerBlock(const std::string& content, size_t& index)
 	while (!(token = GetNextToken(content, index)).empty())	//	Loop untill closing brace.
 	{
 		if (token == "}")
-		{
 			break;
-		}
 		else if (token == "location")
 		{
-			if (!ParseLocationBlock(content, index, new_server))		// NESTED BLOCK: Call a dedicated function to handle 'location { ... }'
-				return (false);
+			if (!ParseLocationBlock(content, index, new_server))		// NESTED BLOCK: Dedicated function to handle 'location { ... }'
+			return false;
+		}
+		else if (token == "server_name")
+		{
+			if (!ParseServerNameDirective(content, index, new_server))		
+				return false;
 		}
 		else if (token == "listen")
 		{
@@ -111,8 +120,8 @@ bool	Config::ParseServerBlock(const std::string& content, size_t& index)
 		}
 		else if (token == "error_page")
 		{
-			if (!ParseErrorPageDirective(content, index, new_server))	//	Template
-				return (false);
+			if (!ParseErrorPageDirectiveT(content, index, new_server))	//	Template
+				return false;
 		}
 		else if (token == "autoindex")
 		{
@@ -137,8 +146,13 @@ bool	Config::ParseServerBlock(const std::string& content, size_t& index)
 		else
 		{
 			std::cerr << "Error: Unknown directive " << token << " found inside server block" << std::endl;
-			return (false);
+			return false;
 		}
+	}
+	if (new_server.locations.empty())			//	Add a hardcoded default location if none is provided.
+	{
+		if (!CreateDefaultLocation(new_server))
+			return false;
 	}
 	_server_configs.push_back(new_server);		//	If all is OK, add new_server to configurations vector in main Config class.
 	return (true);

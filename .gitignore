@@ -2,4 +2,5 @@
 *.a
 .vscode
 to_do.txt
-test_parse/
+config_tests/
+TO DO.txt
