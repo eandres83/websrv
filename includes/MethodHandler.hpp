@@ -15,9 +15,9 @@
 class MethodHandler
 {
 	private:
-		static Response _handleGet(Client& client);
+		static Response _handleGet(Client& client, const LocationConfig* location);
 		static Response _handlePost(Client& client, const LocationConfig* location);
-		static Response _handleDelete(Client& client);
+		static Response _handleDelete(Client& client, const LocationConfig* location);
 
 		static std::string  _readFile(const std::string& path);
 		static std::string  _getMimeType(const std::string& path);

@@ -5,20 +5,20 @@
 Response MethodHandler::handle(Client &client, const LocationConfig *location)
 {
 	if (client.getRequest().getMethod() == "GET")
-		return (_handleGet(client));
+		return (_handleGet(client, location));
 	else if (client.getRequest().getMethod() == "POST")
 		return (_handlePost(client, location));
 	else if (client.getRequest().getMethod() == "DELETE")
-		return (_handleDelete(client));
+		return (_handleDelete(client, location));
 
 	Response response;
-	response.buildErrorResponse(501, client.getConfig());
+	response.buildErrorResponse(501, client.getConfig(), location);
 	return (response);
 }
 
 // --- Implementacion de los metodos ---
 
-Response MethodHandler::_handleGet(Client &client)
+Response MethodHandler::_handleGet(Client &client, const LocationConfig* location)
 {
 	const Request &request = client.getRequest();
 	const ServerConfig &config = client.getConfig();
@@ -29,7 +29,7 @@ Response MethodHandler::_handleGet(Client &client)
 
 	if (access(full_path.c_str(), F_OK) == -1) // Si el archivo no existe
 	{
-		response.buildErrorResponse(404, config);
+		response.buildErrorResponse(404, config, location);
 	}
 	else // Si el archivo existe
 	{
@@ -94,36 +94,36 @@ Response MethodHandler::_handlePost(Client &client, const LocationConfig *locati
 	{
 		// Si no es multipart/form-data, lo tratamos como un cuerpo simple
 		if (access(final_path.c_str(), F_OK) == 0)
-			return (response.buildErrorResponse(409, config), response);
+			return (response.buildErrorResponse(409, config, location), response);
 		std::ofstream new_file(final_path.c_str(), std::ios::binary);
 		if (!new_file.is_open())
-			return (response.buildErrorResponse(500, config), response);
+			return (response.buildErrorResponse(500, config, location), response);
 		new_file << request.getBody();
 		new_file.close();
-		return (response.buildErrorResponse(201, config), response);
+		return (response.buildErrorResponse(201, config, location), response);
 	}
 
 	// 2. Comprobar si el recurso ya existe
 	if (access(final_path.c_str(), F_OK) == 0)
-		return (response.buildErrorResponse(409, config), response);
+		return (response.buildErrorResponse(409, config, location), response);
 
 	// 3. Parsear el cuerpo para extraer solo el contenido del archivo
 	std::string file_content = MethodHandler::_parseMultipartBody(request.getBody(), boundary);
 	if (file_content.empty())
-		return (response.buildErrorResponse(400, config), response);
+		return (response.buildErrorResponse(400, config, location), response);
 
 	// 4. Escribir el contenido extraido en el archivo
 	std::ofstream new_file(final_path.c_str(), std::ios::binary);
 	if (!new_file.is_open())
-		return (response.buildErrorResponse(500, config), response);
+		return (response.buildErrorResponse(500, config, location), response);
 
 	new_file.write(file_content.c_str(), file_content.length());
 	new_file.close();
 
-	return (response.buildErrorResponse(201, config), response);
+	return (response.buildErrorResponse(201, config, location), response);
 }
 
-Response MethodHandler::_handleDelete(Client &client)
+Response MethodHandler::_handleDelete(Client &client, const LocationConfig* location)
 {
 	const Request &request = client.getRequest();
 	const ServerConfig &config = client.getConfig();
@@ -134,16 +134,16 @@ Response MethodHandler::_handleDelete(Client &client)
 	if (access(full_path.c_str(), F_OK) == -1)
 	{
 		// Si el archivo no existe, no se puede borrar. Devolvemos 404
-		response.buildErrorResponse(404, config);
+		response.buildErrorResponse(404, config, location);
 	}
 	else if (remove(full_path.c_str()) == 0) // Intentamos borrarlo
 	{
-		response.buildErrorResponse(204, config);
+		response.buildErrorResponse(204, config, location);
 	}
 	else
 	{
 		// Si `remove` falla por otra razón (ej. permisos)
-		response.buildErrorResponse(500, config);
+		response.buildErrorResponse(500, config, location);
 	}
 	return (response);
 }
@@ -331,7 +331,7 @@ Response MethodHandler::_handleUserSingup(Client &client, Response &response)
 		if (it->second.getName() == username)
 		{
 			Logger::log(INFO, "USUARIO REPETIDO: " + username);
-			response.buildErrorResponse(509, client.getConfig());
+			response.buildErrorResponse(509, client.getConfig(), NULL);
 			return response; // salir temprano
 		}
 	}
@@ -352,7 +352,7 @@ Response MethodHandler::_handleUserSingup(Client &client, Response &response)
 	else
 	{
 		Logger::log(FATAL, "[SIGNUP] Fallo al crear usuario (addUser retornó false)");
-		response.buildErrorResponse(500, client.getConfig());
+		response.buildErrorResponse(500, client.getConfig(), NULL);
 		return response;
 	}
 	return (response);

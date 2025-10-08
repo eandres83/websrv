@@ -112,37 +112,55 @@ static std::map<int, std::string> getStatusMessages()
 	return (messages);
 }
 
-void Response::buildErrorResponse(int error_code, const ServerConfig& config)
+void Response::buildErrorResponse(int error_code, const ServerConfig& config, const LocationConfig* location)
 {
-	std::map<int, std::string> status_messages = getStatusMessages();
-	std::string message;
+    std::map<int, std::string> status_messages = getStatusMessages();
+    std::string message = "Error";
+    if (status_messages.count(error_code))
+        message = status_messages.at(error_code);
 
-	std::map<int, std::string>::const_iterator it = status_messages.find(error_code);
-	if (it != status_messages.end())
-		message = it->second;
-	else
-		message = "Error";
+    std::string body;
+    std::string error_page_path;
+    // Por defecto, usamos el root del servidor
+    std::string root_dir = config.root_directory;
 
-	std::string body;
-	// 1. Comprobar si hay una pagina personalizada en la config
-	if (config.error_pages.count(error_code))
-	{
-		body = readFile(config.error_pages.at(error_code));
-	}
+    // 1. Primero, buscar en la 'location'
+    if (location && location->error_pages.count(error_code))
+    {
+        error_page_path = location->error_pages.at(error_code);
+        // El root de la location tiene prioridad si existe
+        if (!location->root_directory.empty())
+            root_dir = location->root_directory;
+    }
+    // 2. Si no, buscar en la configuración del servidor
+    else if (config.error_pages.count(error_code))
+    {
+        error_page_path = config.error_pages.at(error_code);
+    }
 
-	// 2. Si no hay pagina personalizada o no se pudo leer, generar una por defecto
-	if (body.empty())
-	{
-		std::stringstream ss;
-		ss << error_code;
-		buildSimpleResponse(ss.str(), message);
-	}
-	else // 3. Si se leyo la pagina personalizada, usarla
-	{
-		std::stringstream ss;
-		ss << error_code;
-		buildCustomResponse(ss.str(), message, body);
-		addHeader("Content-Type", "text/html");
-	}
+    if (!error_page_path.empty())
+    {
+        std::string full_path = root_dir;
+        if (!full_path.empty() && full_path.length() != '/')
+            full_path += '/';
+		if (!error_page_path.empty() && error_page_path[0] == '/')
+			error_page_path.erase(0, 1);
+        full_path += error_page_path;
+        body = readFile(full_path);
+    }
+
+    // 3. Generar respuesta (el resto de la función es igual)
+    if (body.empty())
+    {
+        std::stringstream ss;
+        ss << error_code;
+        buildSimpleResponse(ss.str(), message);
+    }
+    else
+    {
+        std::stringstream ss;
+        ss << error_code;
+        buildCustomResponse(ss.str(), message, body);
+        addHeader("Content-Type", "text/html");
+    }
 }
-

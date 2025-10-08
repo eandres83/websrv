@@ -10,7 +10,7 @@ Response DirectoryHandler::handle(Client& client, const LocationConfig* location
 
 	if (full_path[full_path.length() - 1] != '/')
 	{
-		response.buildErrorResponse(301, config); // 301 Moved Permanently
+		response.buildErrorResponse(301, config, location); // 301 Moved Permanently
 		return (response);
 	}
 
@@ -37,7 +37,7 @@ Response DirectoryHandler::handle(Client& client, const LocationConfig* location
 		return (_generateAutoindexPage(request.getPath(), full_path));
 	}
 
-	response.buildErrorResponse(403, config); // 403 Forbidden
+	response.buildErrorResponse(403, config, location); // 403 Forbidden
 	return (response);
 }
 

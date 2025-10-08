@@ -201,7 +201,7 @@ void Server::handleClientRequest(int client_fd, int epoll_fd)
 			if (client.getRequestBuffer().length() > static_cast<size_t>(config.client_max_body_size))
 			{
 				Response response;
-				response.buildErrorResponse(413, config); // 413 Payload Too Large
+				response.buildErrorResponse(413, config, NULL); // 413 Payload Too Large
 				client.setResponseBuffer(response.toString());
 				client.setState(WRITING);
 
@@ -382,7 +382,7 @@ void Server::handleCGIEvent(Client& client, int cgi_fd, int epoll_fd)
 			break; // no hay más por ahora
 		// error: cerrar CGI y devolver 500
 		Response response;
-		response.buildErrorResponse(500, client.getConfig());
+		response.buildErrorResponse(500, client.getConfig(), NULL);
 		client.setResponseBuffer(response.toString());
 		client.setState(WRITING);
 

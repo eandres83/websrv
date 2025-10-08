@@ -149,10 +149,19 @@ bool	Config::ParseServerBlock(const std::string& content, size_t& index)
 			return false;
 		}
 	}
-	if (new_server.locations.empty())			//	Add a hardcoded default location if none is provided.
+	bool root_location_exists = false;
+	for (size_t i = 0; i < new_server.locations.size(); ++i)
+	{
+		if (new_server.locations[i].path == "/")
+		{
+			root_location_exists = true;
+			break ;
+		}
+	}
+	if (!root_location_exists)
 	{
 		if (!CreateDefaultLocation(new_server))
-			return false;
+			return (false);
 	}
 	_server_configs.push_back(new_server);		//	If all is OK, add new_server to configurations vector in main Config class.
 	return (true);
