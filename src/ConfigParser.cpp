@@ -79,6 +79,15 @@ bool Config::ParseLocationBlock(const std::string& content, size_t& index, Serve
 		std::cerr << "Error: Unexpected end of file while parsing location block (missing '}')" << std::endl;
 		return (false);
 	}
+
+	for (size_t i = 0; i < server.locations.size(); ++i)
+	{
+		if (server.locations[i].path == current_location.path)
+		{
+			std::cerr << "Error: Duplicate location path '" << current_location.path << "' found in server block." << std::endl;
+			return (false);
+		}
+	}
 	server.locations.push_back(current_location);				// If all is OK, attach location block to parent server
 	return (true);
 }
@@ -163,6 +172,19 @@ bool	Config::ParseServerBlock(const std::string& content, size_t& index)
 		if (!CreateDefaultLocation(new_server))
 			return (false);
 	}
+
+	if (new_server.port == 0)
+	{
+		std::cerr << "Error: The 'listen' directive is mandatory in the server block" << std::endl;
+		return (false);
+	}
+
+	if (new_server.root_directory.empty())
+	{
+		std::cerr << "Error: The 'root' directive is mandatory in the server block" << std::endl;
+		return (false);
+	}
+
 	_server_configs.push_back(new_server);		//	If all is OK, add new_server to configurations vector in main Config class.
 	return (true);
 }
