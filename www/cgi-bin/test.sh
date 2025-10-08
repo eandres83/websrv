@@ -1,32 +1,26 @@
-<?php
-// Simple CGI script for custom web server
-$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-$uri = $_SERVER['REQUEST_URI'] ?? '/cgi-bin/script.php';
-$query = $_SERVER['QUERY_STRING'] ?? '';
-$server = $_SERVER['SERVER_NAME'] ?? 'localhost';
-$port = $_SERVER['SERVER_PORT'] ?? '8080';
-$client = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-$timestamp = date('Y-m-d H:i:s');
+#!/bin/bash
 
-// Parse GET manually from QUERY_STRING
-$get_params = [];
-if ($query) {
-    parse_str($query, $get_params);
-}
+# Print HTTP headers
+echo "Content-Type: text/html; charset=utf-8"
+echo ""
 
-// Parse POST manually from body
-$post_params = [];
-$post_body = file_get_contents('php://input');
-if ($method === 'POST' && $post_body) {
-    parse_str($post_body, $post_params);
-}
-?>
+# Get CGI environment variables
+METHOD="${REQUEST_METHOD:-GET}"
+URI="${REQUEST_URI:-/cgi-bin/test.sh}"
+QUERY="${QUERY_STRING:-}"
+SERVER="${SERVER_NAME:-localhost}"
+PORT="${SERVER_PORT:-8080}"
+CLIENT="${REMOTE_ADDR:-unknown}"
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+# HTML output
+cat << EOF
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHP CGI - Custom Web Server</title>
+    <title>Bash CGI - Custom Web Server</title>
     <style>
         * {
             margin: 0;
@@ -103,67 +97,35 @@ if ($method === 'POST' && $post_body) {
             margin: 15px 0;
             border-radius: 5px;
         }
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
         code {
             background: #e8eaf6;
             padding: 2px 6px;
             border-radius: 3px;
             font-family: monospace;
         }
-        form {
-            background: #f9fafb;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
-        }
-        input {
-            padding: 8px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            margin: 5px;
-            font-size: 1em;
-        }
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        button {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1em;
-        }
-        button:hover {
-            opacity: 0.9;
-        }
-        .php-icon {
+        .bash-icon {
             font-size: 3em;
             text-align: center;
             margin: 20px 0;
-        }
-        .empty {
-            color: #999;
-            font-style: italic;
-            text-align: center;
-            padding: 20px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="card">
-            <div class="php-icon">🐘</div>
-            <h1>PHP CGI Script</h1>
+            <div class="bash-icon">🐚</div>
+            <h1>Bash CGI Script</h1>
             <div class="status">
                 <span class="status-dot"></span>
                 CUSTOM WEB SERVER ACTIVE
             </div>
             <div class="info-box">
-                <h3>✓ PHP CGI is Working!</h3>
-                <p>This page is generated dynamically by PHP running on your custom web server.</p>
+                <h3>✓ Bash CGI is Working!</h3>
+                <p>This page is generated dynamically by a Bash script running on your custom web server.</p>
             </div>
         </div>
 
@@ -176,60 +138,29 @@ if ($method === 'POST' && $post_body) {
                 </tr>
                 <tr>
                     <td><strong>Method</strong></td>
-                    <td><code><?php echo htmlspecialchars($method); ?></code></td>
+                    <td><code>$METHOD</code></td>
                 </tr>
                 <tr>
                     <td><strong>URI</strong></td>
-                    <td><code><?php echo htmlspecialchars($uri); ?></code></td>
+                    <td><code>$URI</code></td>
                 </tr>
                 <tr>
                     <td><strong>Query String</strong></td>
-                    <td><code><?php echo htmlspecialchars($query ?: '(empty)'); ?></code></td>
+                    <td><code>${QUERY:-'(empty)'}</code></td>
                 </tr>
                 <tr>
                     <td><strong>Server</strong></td>
-                    <td><code><?php echo htmlspecialchars($server . ':' . $port); ?></code></td>
+                    <td><code>$SERVER:$PORT</code></td>
                 </tr>
                 <tr>
                     <td><strong>Client IP</strong></td>
-                    <td><code><?php echo htmlspecialchars($client); ?></code></td>
+                    <td><code>$CLIENT</code></td>
                 </tr>
                 <tr>
                     <td><strong>Timestamp</strong></td>
-                    <td><code><?php echo htmlspecialchars($timestamp); ?></code></td>
-                </tr>
-                <tr>
-                    <td><strong>PHP Version</strong></td>
-                    <td><code><?php echo PHP_VERSION; ?></code></td>
+                    <td><code>$TIMESTAMP</code></td>
                 </tr>
             </table>
-        </div>
-
-        <div class="card">
-            <h2 style="color: #667eea; margin-bottom: 15px;">🧪 Test Forms</h2>
-            <form method="get" action="">
-                <strong>🔍 Test GET:</strong><br>
-                <input name="name" placeholder="Your name" value="">
-                <input name="value" placeholder="Some value" value="">
-                <button type="submit">Send GET</button>
-            </form>
-        </div>
-
-        <div class="card">
-            <h2 style="color: #667eea; margin-bottom: 15px;">📥 GET Parameters</h2>
-            <?php if (!empty($get_params)): ?>
-                <table>
-                    <tr><th>Key</th><th>Value</th></tr>
-                    <?php foreach ($get_params as $key => $value): ?>
-                        <tr>
-                            <td><strong><?php echo htmlspecialchars($key); ?></strong></td>
-                            <td><?php echo htmlspecialchars($value); ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </table>
-            <?php else: ?>
-                <div class="empty">📭 No GET parameters received</div>
-            <?php endif; ?>
         </div>
 
         <div class="card">
@@ -241,27 +172,45 @@ if ($method === 'POST' && $post_body) {
                 </tr>
                 <tr>
                     <td><strong>GATEWAY_INTERFACE</strong></td>
-                    <td><code><?php echo htmlspecialchars($_SERVER['GATEWAY_INTERFACE'] ?? 'not set'); ?></code></td>
+                    <td><code>${GATEWAY_INTERFACE:-'not set'}</code></td>
                 </tr>
                 <tr>
                     <td><strong>SERVER_PROTOCOL</strong></td>
-                    <td><code><?php echo htmlspecialchars($_SERVER['SERVER_PROTOCOL'] ?? 'not set'); ?></code></td>
+                    <td><code>${SERVER_PROTOCOL:-'not set'}</code></td>
                 </tr>
                 <tr>
                     <td><strong>SERVER_SOFTWARE</strong></td>
-                    <td><code><?php echo htmlspecialchars($_SERVER['SERVER_SOFTWARE'] ?? 'Custom Web Server'); ?></code></td>
+                    <td><code>${SERVER_SOFTWARE:-'Custom Web Server'}</code></td>
                 </tr>
                 <tr>
                     <td><strong>SCRIPT_NAME</strong></td>
-                    <td><code><?php echo htmlspecialchars($_SERVER['SCRIPT_NAME'] ?? 'not set'); ?></code></td>
+                    <td><code>${SCRIPT_NAME:-'not set'}</code></td>
                 </tr>
             </table>
         </div>
 
+        <div class="card">
+            <h2 style="color: #667eea; margin-bottom: 15px;">🔧 Bash Capabilities</h2>
+            <div class="info-box">
+                <h3>What Bash CGI can do:</h3>
+                <p>✓ Process environment variables</p>
+                <p>✓ Generate dynamic HTML content</p>
+                <p>✓ Execute system commands</p>
+                <p>✓ Handle HTTP requests</p>
+            </div>
+            <div style="background: #1e1e1e; color: #00ff00; padding: 15px; border-radius: 5px; font-family: monospace; margin-top: 15px;">
+                <div>$ echo "Hello from Bash CGI!"</div>
+                <div style="margin-top: 5px;">Hello from Bash CGI!</div>
+                <div style="margin-top: 10px;">$ date</div>
+                <div style="margin-top: 5px;">$TIMESTAMP</div>
+            </div>
+        </div>
+
         <div class="card" style="text-align: center; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
             <h3 style="color: #667eea;">🚀 Custom Web Server</h3>
-            <p style="margin-top: 10px; color: #555;">This PHP CGI script is executed by your custom web server</p>
+            <p style="margin-top: 10px; color: #555;">This Bash CGI script is executed by your custom web server</p>
         </div>
     </div>
 </body>
 </html>
+EOF
