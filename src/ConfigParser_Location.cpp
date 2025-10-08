@@ -1,16 +1,4 @@
-/******************************************************************************/
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ConfigParser_Location.cpp                          :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/10/06 10:12:35 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 16:41:14 by igchurru         ###   ########.fr       */
-/*                                                                            */
-/******************************************************************************/
-
-#include "../includes/Config.hpp"
+#include "Config.hpp"
 
 /*	Parses the 'index <file1> <file2> ... ;' directive. */
 bool Config::ParseIndexDirective(const std::string& content, size_t& index, LocationConfig& current_location)

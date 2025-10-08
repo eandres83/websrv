@@ -1,16 +1,26 @@
-/******************************************************************************/
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ConfigParserUtils.cpp                              :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/10/03 10:01:37 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/07 11:07:20 by igchurru         ###   ########.fr       */
-/*                                                                            */
-/******************************************************************************/
+#include "Config.hpp"
 
-#include "../includes/Config.hpp"
+
+/* Creates a default location for the server if none is specified in the configuration file */
+bool	CreateDefaultLocation(ServerConfig& new_server)
+{
+	LocationConfig 	current_location;
+	
+	current_location.path = "/";
+	current_location.allowed_methods.push_back("GET");
+	current_location.allowed_methods.push_back("POST");
+	current_location.autoindex = true;
+	current_location.root_directory = "./www/";
+	current_location.index_files.push_back("index.html");
+
+	new_server.locations.push_back(current_location);
+	if (new_server.locations.empty())
+	{
+		std::cout << "Error: Could not create default location" << std::endl;
+		return false;
+	}
+	return true;
+}
 
 /*	Extracts the next valid token from the raw config data (C++98 Safe).
  *	returns: Next token as a std::string. Empty string when the end is reached. */
@@ -26,7 +36,7 @@ std::string GetNextToken(const std::string& raw_data, size_t& index)
 	{												
 		while (index < datalen && (raw_data[index] == ' ' || raw_data[index] == '\t' ||  raw_data[index] == '\n' || raw_data[index] == '\r'))	
 			index++;
-		if (raw_data[index] == '#')										//	Skip '#' (comments) to end of line
+		if (raw_data[index] == '#')										//	Skip comments to end of line
 		{
 			while (index < datalen && raw_data[index] != '\n')			//	When newline, restart outer loop.
 				index++;
@@ -53,7 +63,7 @@ std::string GetNextToken(const std::string& raw_data, size_t& index)
 }
 
 /*	This function uses standard C++ file streams to read the file contents.
- 	Return: whole file as a std::string. Empty string on failure. */
+	Return: whole file as a std::string. Empty string on failure. */
 std::string ReadFileToString(const std::string& filename)
 {
 	std::stringstream	buffer;

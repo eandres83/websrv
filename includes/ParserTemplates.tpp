@@ -1,18 +1,53 @@
-/******************************************************************************/
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ParserTemplates.tpp                                :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: igchurru <igchurru@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/10/06 10:09:35 by igchurru          #+#    #+#             */
-/*   Updated: 2025/10/06 13:49:19 by igchurru         ###   ########.fr       */
-/*                                                                            */
-/******************************************************************************/
-
 //	TEMPLATE FUNCTIONS FOR PARSING DIRECTIVES SHARED BOTH BY SERVER AND LOCATION
 
 #include <string>
+
+template <typename ConfigT>
+bool	ParseErrorPageDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct)
+{
+	std::string	code_token;
+	std::string	path_token;
+	std::string	semicolon;
+	int			error_code;
+
+	code_token = GetNextToken(content, index);								//	Expect error code.
+	if (code_token.empty())
+	{
+		std::cerr << "Error: Unexpected EOF after 'error_page' directive." << std::endl;
+		return false;
+	}
+	std::istringstream code_ss(code_token);									// Convert code string to int
+	code_ss >> error_code;
+	if (code_ss.fail() || error_code < 300 || error_code > 599)				// Validation: Check conversion and range.
+	{
+		std::cerr << "Error: Invalid or out-of-range error code '" << code_token << "'." << std::endl;
+		return false;
+	}
+	path_token = GetNextToken(content, index);								//	Expect path.
+	if (path_token.empty())													//	Validation: EOF
+	{
+		std::cerr << "Error: Unexpected EOF after error code (missing path)." << std::endl;
+		return false;
+	}
+	if (path_token == ";")													//	Validation: Path is not ';'.
+	{
+		std::cerr << "Error: 'error_page' path is missing." << std::endl;
+		return false;
+	}
+	if (config_struct.error_pages.find(error_code) != config_struct.error_pages.end())	//	Validation: Method .find() from map container to check double entries
+	{
+		std::cerr << "Error: Duplicate 'error_page' entry for code " << error_code << "." << std::endl;
+		return false;
+	}
+	semicolon = GetNextToken(content, index);								//	Expect ';'
+	if (semicolon != ";")
+	{
+		std::cerr << "Error: Expected ';' after error path, found '" << semicolon << "'" << std::endl;
+		return false;
+	}
+	config_struct.error_pages[error_code] = path_token;							//	All OK. Populate map.
+	return true;
+}
 
 template <typename ConfigT>
 bool	ParseAutoindexDirectiveT(const std::string& content, size_t& index, ConfigT& config_struct)
@@ -79,9 +114,9 @@ bool	ParseAllowedMethodsDirectiveT(const std::string& content, size_t& index, Co
 		std::cerr << "Error: Duplicate 'allowed_methods' directive found." << std::endl;
 		return false;
 	}
-	while (!(token = GetNextToken(content, index)).empty())							//	Loop untill ';'
+	while (!(token = GetNextToken(content, index)).empty())								//	Loop untill ';'
 	{
-		if (token == ";")															//	If end of directive...
+		if (token == ";")																//	If end of directive...
 		{
 			if (config_struct.allowed_methods.empty())										//	... at least one valid method must be present
 			{
@@ -89,11 +124,6 @@ bool	ParseAllowedMethodsDirectiveT(const std::string& content, size_t& index, Co
 				return false;
 			}
 			return true;
-		}
-		if (!(token == "GET" || token == "POST" || token == "DELETE"))				//	Validation: Only uppercase.
-		{
-			std::cerr << "Error: Invalid HTTP method '" << token << "' in allowed_methods. Must be GET, POST, or DELETE." << std::endl;
-			return false;
 		}
 		config_struct.allowed_methods.push_back(token);									//	Store valid method into the vector.
 	}
