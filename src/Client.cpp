@@ -95,11 +95,11 @@ Server& Client::getServer() const
 
 void Client::setCGIStartTime(time_t time)
 {
-    this->cgi_start_time = time;
+    this->_cgi_start_time = time;
 }
 
 time_t Client::getCGIStartTime() const
 {
-    return this->cgi_start_time;
+    return this->_cgi_start_time;
 }
 

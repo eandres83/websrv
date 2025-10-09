@@ -413,14 +413,14 @@ void Server::checkCGITimeouts()
                 waitpid(it->second.getCGIPid(), NULL, 0);
                 
                 // Close the pipe
-                epoll_ctl(g_epoll_fd, EPOLL_CTL_DEL, it->second.getCGIPipeFd(), NULL);
-                close(it->second.getCGIPipeFd());
+                epoll_ctl(g_epoll_fd, EPOLL_CTL_DEL, it->second.getCGIStdoutFd(), NULL);
+                close(it->second.getCGIStdoutFd());
 
                 // Prepare a 504 Gateway Timeout response
                 Response error_response;
-                error_response.setStatusCode(504);
-                it->second.setResponse(error_response);
-                it->second.setState(READY_TO_SEND);
+                error_response.setStatusCode("504", "Gateway Timeout");
+                it->second.setResponseBuffer(error_response.toString());
+                it->second.setState(WRITING);
 
                 // Make the client socket writable to send the error response
                 struct epoll_event ev;
