@@ -39,6 +39,7 @@ class Server
 		void handleClientResponse(int client_fd, int epoll_fd);
 		void closeClientConnection(int client_fd, int epoll_fd);
 		void handleCGIEvent(Client& client, int cgi_fd, int epoll_fd);
+		void checkCGITimeouts();
 
 	public:
 		Server(const Config& config);
