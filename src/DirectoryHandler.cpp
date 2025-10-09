@@ -58,10 +58,27 @@ Response DirectoryHandler::_generateAutoindexPage(const std::string& path, const
 		while ((entry = readdir(dir)) != NULL) // Lo mismo, readdir funciona con una estructura dirent
 		{
 			std::string name = entry->d_name;
-			std::string full_path = path;
-			if (full_path[full_path.length() - 1] != '/') // Compruebo si acaba con una '/' ns si es 100% necesario
-				full_path += '/';
-			body_stream << "<li><a href=\"" << full_path << name << "\">" << name << "</a></li>";
+
+			// Construir la ruta completa en el sistema de archivos para poder verificar si es un directorio
+ 			std::string full_fs_path = directory;
+			if (full_fs_path[full_fs_path.length() - 1] != '/')
+				full_fs_path += '/';
+			full_fs_path += name;
+
+			// Preparar el nombre del enlace y el texto a mostrar
+			std::string display_name = name;
+			std::string href_path = path;
+			if (href_path[href_path.length() - 1] != '/')
+				href_path += '/';
+			href_path += name;
+
+			// Si es un directorio (y no es el directorio actual "."), añadimos la barra al final
+			if (_isDirectory(full_fs_path) && name != ".")
+			{
+				display_name += "/";
+				href_path += "/";
+			}
+			body_stream << "<li><a href=\"" << href_path << "\">" << display_name << "</a></li>";
 		}
 		closedir(dir);
 	}
