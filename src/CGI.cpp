@@ -115,6 +115,7 @@ int manageCGI(Client &client, Response &response)
         epoll_ctl(g_epoll_fd, EPOLL_CTL_ADD, pipe_out[0], &ev);
 
         client.setCGIContext(pid, -1, pipe_out[0]);
+        client.setCGIStartTime(time(NULL));
         client.setState(CGI_RUNNING);
         return 0;
     }

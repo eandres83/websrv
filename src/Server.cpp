@@ -400,6 +400,38 @@ void Server::handleCGIEvent(Client& client, int cgi_fd, int epoll_fd)
 	}
 }
 
+void Server::checkCGITimeouts()
+{
+    time_t current_time = time(NULL);
+    for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+    {
+        if (it->second.getState() == CGI_RUNNING)
+        {
+            if (current_time - it->second.getCGIStartTime() > 50)
+            {
+                kill(it->second.getCGIPid(), SIGKILL);
+                waitpid(it->second.getCGIPid(), NULL, 0);
+                
+                // Close the pipe
+                epoll_ctl(g_epoll_fd, EPOLL_CTL_DEL, it->second.getCGIPipeFd(), NULL);
+                close(it->second.getCGIPipeFd());
+
+                // Prepare a 504 Gateway Timeout response
+                Response error_response;
+                error_response.setStatusCode(504);
+                it->second.setResponse(error_response);
+                it->second.setState(READY_TO_SEND);
+
+                // Make the client socket writable to send the error response
+                struct epoll_event ev;
+                ev.events = EPOLLOUT | EPOLLET;
+                ev.data.fd = it->first;
+                epoll_ctl(g_epoll_fd, EPOLL_CTL_MOD, it->first, &ev);
+            }
+        }
+    }
+}
+
 std::map<unsigned int, User> Server::getRegisteredUsers() {return (_registered_users); };
 
 bool Server::addUser(const std::string& name, const std::string& password, const std::string& email) {

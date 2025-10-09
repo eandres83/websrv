@@ -36,6 +36,7 @@ class Client
 		pid_t     _cgi_pid;
 		std::string _cgi_buffer;
 		Server	*_server;
+		time_t              _cgi_start_time;
 
 	//Referencia a listado de usuarios
 
@@ -67,6 +68,8 @@ class Client
         pid_t getCGIPid() const;
         std::string& getCGIBuffer();
         void clearCGIContext();
+        void                setCGIStartTime(time_t time);
+        time_t              getCGIStartTime() const;
 };
 
 #endif // CLIENT_HPP
